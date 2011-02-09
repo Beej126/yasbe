@@ -1,0 +1,52 @@
+<?xml version="1.0"?>
+<SqlWorkbenchSqlProject xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" Name="YASBE">
+  <Items>
+    <LogicalFolder Name="Connections" Type="2" Sorted="true">
+      <Items>
+        <ConnectionNode Name="BEEJQUAD\DEV2008:BeejQuad\Beej">
+          <Created>2011-02-09T11:41:05.6567262+01:00</Created>
+          <Type>SQL</Type>
+          <Server>BEEJQUAD\DEV2008</Server>
+          <UserName />
+          <Authentication>Windows Authentication</Authentication>
+          <InitialDB />
+          <LoginTimeout>15</LoginTimeout>
+          <ExecutionTimeout>0</ExecutionTimeout>
+          <ConnectionProtocol>NotSpecified</ConnectionProtocol>
+          <ApplicationName>Microsoft SQL Server Management Studio - Query</ApplicationName>
+        </ConnectionNode>
+      </Items>
+    </LogicalFolder>
+    <LogicalFolder Name="Queries" Type="0" Sorted="true">
+      <Items>
+        <FileNode Name="BackupProfileFolder_UDT.sql">
+          <AssociatedConnectionMoniker>8c91a03d-f9b4-46c0-a305-b5dcc79ff907:BEEJQUAD\DEV2008:True</AssociatedConnectionMoniker>
+          <AssociatedConnSrvName>BEEJQUAD\DEV2008</AssociatedConnSrvName>
+          <AssociatedConnUserName />
+          <FullPath>BackupProfileFolder_UDT.sql</FullPath>
+        </FileNode>
+        <FileNode Name="BackupProfileFolders_s.sql">
+          <AssociatedConnectionMoniker>8c91a03d-f9b4-46c0-a305-b5dcc79ff907:BEEJQUAD\DEV2008:True</AssociatedConnectionMoniker>
+          <AssociatedConnSrvName>BEEJQUAD\DEV2008</AssociatedConnSrvName>
+          <AssociatedConnUserName />
+          <FullPath>BackupProfileFolders_s.sql</FullPath>
+        </FileNode>
+        <FileNode Name="BackupProfile_u.sql">
+          <AssociatedConnectionMoniker>8c91a03d-f9b4-46c0-a305-b5dcc79ff907:BEEJQUAD\DEV2008:True</AssociatedConnectionMoniker>
+          <AssociatedConnSrvName>BEEJQUAD\DEV2008</AssociatedConnSrvName>
+          <AssociatedConnUserName />
+          <FullPath>BackupProfile_u.sql</FullPath>
+        </FileNode>
+        <FileNode Name="BackupProfiles_s.sql">
+          <AssociatedConnectionMoniker>8c91a03d-f9b4-46c0-a305-b5dcc79ff907:BEEJQUAD\DEV2008:True</AssociatedConnectionMoniker>
+          <AssociatedConnSrvName>BEEJQUAD\DEV2008</AssociatedConnSrvName>
+          <AssociatedConnUserName />
+          <FullPath>BackupProfiles_s.sql</FullPath>
+        </FileNode>
+      </Items>
+    </LogicalFolder>
+    <LogicalFolder Name="Miscellaneous" Type="3" Sorted="true">
+      <Items />
+    </LogicalFolder>
+  </Items>
+</SqlWorkbenchSqlProject>

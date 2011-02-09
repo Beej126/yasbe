@@ -39,13 +39,15 @@
     <ApplicationIcon>Backup.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Accessibility">
+      <EmbedInteropTypes>True</EmbedInteropTypes>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="System.Xaml">
       <RequiredTargetFramework>4.0</RequiredTargetFramework>
     </Reference>
@@ -60,6 +62,7 @@
     </ApplicationDefinition>
     <Compile Include="Assert.cs" />
     <Compile Include="ExtensionMethods.cs" />
+    <Compile Include="FileSystemNode.cs" />
     <Compile Include="ReflectionHelpers.cs" />
     <Compile Include="Settings.cs" />
     <Compile Include="SqlClientHelpers.cs" />

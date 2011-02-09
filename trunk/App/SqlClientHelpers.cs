@@ -5,6 +5,7 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Reflection;
 //make sure to keep this clean of any particular UI assembly dependencies so that it can be
 //reused across ASP.Net, Windows.Forms and WPF projects
 
@@ -435,5 +436,7 @@ public static class SqlClientHelpers
 
     return (r);
   }
+
 }
+
 

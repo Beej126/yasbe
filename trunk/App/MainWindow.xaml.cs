@@ -19,8 +19,6 @@ using System.Collections.ObjectModel;
 
 using System.Security.Principal;
 
-using System.ComponentModel;
-
 using System.Data;
 using System.Data.SqlClient;
 
@@ -31,13 +29,6 @@ namespace YASBE
     
     public MainWindow()
     {
-      using (Proc BackupProfiles_s = new Proc("BackupProfiles_s"))
-      {
-        DataSet ds = BackupProfiles_s.ExecuteDataSet();
-        BackupProfiles = ds.Tables[0];
-        _BlankBackupProfileTable = ds.Tables[1];
-      }
-      
       InitializeComponent();
       BackupFile.List.CollectionChanged += (s, a) => { if (a.NewItems != null) datagrid.ScrollIntoView(a.NewItems[0]); };
       datagrid.AutoGeneratingColumn += new EventHandler<DataGridAutoGeneratingColumnEventArgs>(datagrid_AutoGeneratingColumn);
@@ -60,6 +51,7 @@ namespace YASBE
 
       _RightAlignStyle = datagrid.FindResource("RightAlignStyle") as Style;
 
+      LoadProfiles();
 
       /*
       bool isAdmin = new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator) ? true : false;
@@ -75,6 +67,19 @@ namespace YASBE
        * */
 
     }
+
+    private void LoadProfiles()
+    {
+      using (Proc BackupProfiles_s = new Proc("BackupProfiles_s"))
+      {
+        BackupProfiles_s["@BackupProfileID"] = cbxBackupProfiles.SelectedValue;
+        DataSet ds = BackupProfiles_s.ExecuteDataSet();
+        BackupProfiles = ds.Tables[0];
+        _BlankBackupProfileTable = ds.Tables[1];
+      }
+
+    }
+
 
     static public string[] WindowsBurnStagingFolders
     {
@@ -161,119 +166,36 @@ namespace YASBE
 
     private void BackupProfileSave_Click(object sender, RoutedEventArgs e)
     {
-      DataTable Folders = MainWindow.GetBlankBackupProfileTable();
-      FolderNode.GetSelectedFolders(Folders, "FullPath", FileSystemNode.RootDirectories);
-
       //DataRowView v = cbxBackupProfiles.SelectedItem as DataRowView;
       using (Proc BackupProfile_u = new Proc("BackupProfile_u"))
       {
-        BackupProfile_u["@BackupProfileID"] = (int)cbxBackupProfiles.SelectedValue;
-        BackupProfile_u["@Folders"] = Folders;
+        BackupProfile_u["@BackupProfileID"] = cbxBackupProfiles.SelectedValue;
+        BackupProfile_u["@Folders"] = FileSystemNode.GetSelected(MainWindow.GetBlankBackupProfileTable());
         BackupProfile_u.ExecuteNonQuery();
       }
 
     }
   }
 
-  public class FileSystemNode : DependencyObject
+  public class FileTreeBackgroundConverter : MarkupExtensionConverter, IMultiValueConverter
   {
-    public string FullPath { get; protected set; }
-    public string Name { get; protected set; }
+    public FileTreeBackgroundConverter() { } //to avoid an XAML annoying warning from XAML designer: "No constructor for type 'xyz' has 0 parameters."  Somehow the inherited one doesn't do the trick!?!  I guess it's a reflection bug.
 
-    public bool IsSelected
+    public object Convert(object[] values, Type targetType, object parameter, System.Globalization.CultureInfo culture)
     {
-      get { return (bool)GetValue(IsSelectedProperty); }
-      set { SetValue(IsSelectedProperty, value); }
+      if (Helpers.DesignMode) return (DependencyProperty.UnsetValue);
+
+      //values[0] = IsSelected
+      //values[1] = IsExcluded
+      //hard coded as much as possible to make sure there's no unecessary cycles lost in this critical section... this routine fires *for every sub tree node* *whenever a checkbox changes* (i.e. A LOT)
+      return ((bool)values[1] ? Brushes.LightPink : (bool)values[0] ? Brushes.LightGreen : DependencyProperty.UnsetValue);
     }
 
-    public static readonly DependencyProperty IsSelectedProperty =
-      DependencyProperty.Register("IsSelected", typeof(bool), typeof(FileSystemNode), new UIPropertyMetadata(false));
-        //  new PropertyMetadata(propertyChangedCallback: (obj, args) =>
-        //{ (obj as ucToggleButton).btnToggle.Style = args.NewValue as Style; })); 
-
-    protected FileSystemNode() { }
-    public FileSystemNode(FileSystemInfo fsi)
+    public object[] ConvertBack(object value, Type[] targetTypes, object parameter, System.Globalization.CultureInfo culture)
     {
-      FullPath = fsi.FullName;
-      Name = fsi.Name;
+      throw new NotImplementedException();
     }
-
-    static public FolderNode[] RootDirectories = (from drive in DriveInfo.GetDrives() where drive.IsReady select new FolderNode(drive.RootDirectory) { Name = drive.VolumeLabel + " (" + drive.Name + ")" }).ToArray();
-
   }
 
-  public class FileNode : FileSystemNode
-  {
-    public FileNode(FileInfo file) : base(file) { }
-  }
-
-  public class FolderNode : FileSystemNode
-  {
-    public bool IsFunky { get; private set; }
-
-    public FolderNode(DirectoryInfo folder) : base(folder)
-    {
-      IsFunky = folder.Attributes.HasFlag(FileAttributes.ReparsePoint);
-    }
-
-    static public void GetSelectedFolders(DataTable t, string FieldName, FileSystemNode[] current)
-    {
-      if (current == null) return;
-
-      foreach (FolderNode f in current.OfType<FolderNode>().ToArray())
-      {
-        if (f.IsSelected)
-        {
-          DataRow r = t.NewRow();
-          r[FieldName] = f.FullPath;
-          t.Rows.Add(r);
-        }
-        GetSelectedFolders(t, FieldName, f._Children);
-      }
-    }
-
-
-    protected FileSystemNode[] _Children = null;
-    public FileSystemNode[] Children
-    {
-      get
-      {
-        if (_Children != null || IsFunky) return (_Children);
-        DirectoryInfo dir = new DirectoryInfo(FullPath);
-        _Children = (from subdir in GetSubdirs(dir) select new FolderNode(subdir)).ToArray();
-        _Children = _Children.Union((from file in GetFiles(dir) select new FileNode(file)).ToArray()).ToArray();
-
-        return (_Children);
-      }
-    }
-
-    private DirectoryInfo[] GetSubdirs(DirectoryInfo dir)
-    {
-      try
-      {
-        return (dir.GetDirectories());
-      }
-      catch (UnauthorizedAccessException)
-      {
-        IsFunky = true;
-        return (new DirectoryInfo[0]);
-      }
-    }
-
-
-    private FileInfo[] GetFiles(DirectoryInfo dir)
-    {
-      try
-      {
-        return (dir.GetFiles());
-      }
-      catch (UnauthorizedAccessException)
-      {
-        IsFunky = true;
-        return (new FileInfo[0]);
-      }
-    }
-
-  }
 
 }
