@@ -1,0 +1,33 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<CodeSnippets xmlns="http://schemas.microsoft.com/VisualStudio/2005/CodeSnippet">
+  <CodeSnippet Format="1.0.0">
+    <Header>
+      <SnippetTypes>
+        <SnippetType>Expansion</SnippetType>
+      </SnippetTypes>
+      <Title>New Stored Proc Template</Title>
+      <Author>Beej</Author>
+      <Description>
+      </Description>
+      <HelpUrl>
+      </HelpUrl>
+      <Shortcut>proct</Shortcut>
+    </Header>
+    <Snippet>
+      <Declarations>
+        <Literal Editable="true">
+          <ID>p</ID>
+          <ToolTip>Proc Name</ToolTip>
+          <Default>procname</Default>
+          <Function>
+          </Function>
+        </Literal>
+      </Declarations>
+      <Code Language="csharp"><![CDATA[using (Proc $p$ = new Proc("$p$"))
+{
+  $p$["@Parm1"] = 0;
+  $p$.ExecuteNonQuery();
+}]]></Code>
+    </Snippet>
+  </CodeSnippet>
+</CodeSnippets>

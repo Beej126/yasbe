@@ -1,0 +1,16 @@
+D:\Dev\Research\YASBE\App\bin\Debug\YASBE.exe.config
+D:\Dev\Research\YASBE\App\bin\Debug\YASBE.exe
+D:\Dev\Research\YASBE\App\bin\Debug\YASBE.pdb
+D:\Dev\Research\YASBE\App\obj\x86\Debug\ResolveAssemblyReference.cache
+D:\Dev\Research\YASBE\App\obj\x86\Debug\MainWindow.g.cs
+D:\Dev\Research\YASBE\App\obj\x86\Debug\App.g.cs
+D:\Dev\Research\YASBE\App\obj\x86\Debug\GeneratedInternalTypeHelper.g.cs
+D:\Dev\Research\YASBE\App\obj\x86\Debug\YASBE_MarkupCompile.cache
+D:\Dev\Research\YASBE\App\obj\x86\Debug\YASBE_MarkupCompile.lref
+D:\Dev\Research\YASBE\App\obj\x86\Debug\MainWindow.baml
+D:\Dev\Research\YASBE\App\obj\x86\Debug\YASBE.g.resources
+D:\Dev\Research\YASBE\App\obj\x86\Debug\YASBE.Properties.Resources.resources
+D:\Dev\Research\YASBE\App\obj\x86\Debug\GenerateResource.read.1.tlog
+D:\Dev\Research\YASBE\App\obj\x86\Debug\GenerateResource.write.1.tlog
+D:\Dev\Research\YASBE\App\obj\x86\Debug\YASBE.exe
+D:\Dev\Research\YASBE\App\obj\x86\Debug\YASBE.pdb
