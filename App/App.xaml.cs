@@ -7,15 +7,16 @@ using System.Windows;
 
 namespace YASBE
 {
-  /// <summary>
-  /// Interaction logic for App.xaml
-  /// </summary>
   public partial class App : Application
   {
     protected override void OnStartup(StartupEventArgs e)
     {
       base.OnStartup(e);
+
+      System.Diagnostics.Process.Start("net.exe", "start MSSQL$DEV2008");
+
       Proc.ConnectionString = @"Data Source=.\dev2008;User ID=sa;Password=annoying;Initial Catalog=YASBE;";
+
       //the App.DispatcherUnhandledException is the preferrable catcher because you can "Handle" it and prevent the app from crashing
       App.Current.DispatcherUnhandledException += new System.Windows.Threading.DispatcherUnhandledExceptionEventHandler(Current_DispatcherUnhandledException);
       //AppDomain.UnhandledException is only good for last ditch capturing of the problematic state info... if an Exception bubbles up this far, the app is going down no way to prevent

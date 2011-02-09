@@ -4,19 +4,14 @@
 --$Modtime: 11/20/09 4:13p $
 
 /****** Object:  StoredProcedure [dbo].[BackupProfile_u]    Script Date: 06/19/2009 15:58:30 ******/
+use YASBE
+go
+
 SET ANSI_NULLS ON
 GO
 
 SET QUOTED_IDENTIFIER OFF
 GO
-
-if not exists(select 1 from sys.types where name = 'BackupProfileFolder_type')
-  create TYPE BackupProfileFolder_type AS TABLE
-  (
-    BackupProfileID int,
-    FullPath VARCHAR(8000)
-  )
-go
 
 if not exists(select 1 from sysobjects where name = 'BackupProfile_u')
 	exec('create PROCEDURE BackupProfile_u as select 1 as one')
@@ -24,7 +19,7 @@ GO
 alter PROCEDURE [dbo].[BackupProfile_u]
 @BackupProfileID int,
 @Name varchar(50) = null,
-@Folders BackupProfileFolder_type readonly
+@Folders BackupProfileFolder_UDT readonly
 AS BEGIN
 	
 SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
@@ -39,8 +34,8 @@ begin
 end
 
 delete BackupProfileFolder where BackupProfileID = @BackupProfileID
-insert BackupProfileFolder (BackupProfileID, FullPath)
-select @BackupProfileID, FullPath
+insert BackupProfileFolder (BackupProfileID, IsExcluded, FullPath)
+select @BackupProfileID, IsExcluded, FullPath
 from @Folders
 
 END

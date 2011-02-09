@@ -4,6 +4,9 @@
 --$Modtime: 11/20/09 4:13p $
 
 /****** Object:  StoredProcedure [dbo].[BackupProfileFolders_s]    Script Date: 06/19/2009 15:58:30 ******/
+use YASBE
+go
+
 SET ANSI_NULLS ON
 GO
 
@@ -20,6 +23,7 @@ SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
 
 SELECT
 	f.BackupProfileID,
+	f.IsExcluded,
 	f.FullPath
 FROM BackupProfile p
 join BackupProfileFolders f on f.BackupProfileID = p.BackupProfileID
