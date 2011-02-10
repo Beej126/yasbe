@@ -9,6 +9,7 @@
         DataContext="{Binding RelativeSource={RelativeSource Self}}"
         xmlns:Properties="clr-namespace:YASBE.Properties"
         xmlns:diagnostics="clr-namespace:System.Diagnostics;assembly=WindowsBase"
+        xmlns:conv="clr-namespace:WPFValueConverters"
  >
 
   <Window.Resources>
@@ -85,10 +86,10 @@
         <StackPanel Orientation="Horizontal" >
           <Label FontSize="24" Content="Current Backup Profile:" />
           <ComboBox Name="cbxBackupProfiles" 
-                    ItemsSource="{Binding Mode=OneWay, Path=BackupProfiles}" 
                     DisplayMemberPath="Name" 
                     SelectedValuePath="BackupProfileID" 
-                    SelectedValue="{Binding Mode=TwoWay, Source={x:Static Properties:Settings.Default}, Path=SelectedBackupProfile}">
+                    SelectedValue="{Binding Mode=TwoWay, Source={x:Static Properties:Settings.Default}, Path=SelectedBackupProfile}"
+                    SelectionChanged="">
             <ComboBox.ItemContainerStyle>
               <Style>
                 <Style.Triggers>
@@ -123,7 +124,8 @@
       </StackPanel>
     </Border>
 
-    <TreeView Grid.Row="1" Grid.Column="0" Name="treeFolders" ItemsSource="{Binding Source={x:Static global:FileSystemNode.RootDirectories}}">
+    <!--nugget: binding to a Dictionary<> requires additional Path=Values -->
+    <TreeView Grid.Row="1" Grid.Column="0" Name="treeFolders" ItemsSource="{Binding Source={x:Static global:FileSystemNode.RootDirectories}, Path=Values}">
       <TreeView.Resources>
 
         <Style TargetType="CheckBox">
@@ -155,19 +157,32 @@
           </Setter>
         </Style>
 
-        <HierarchicalDataTemplate DataType="{x:Type global:FolderNode}" ItemsSource="{Binding Path=Children}">
+        <HierarchicalDataTemplate DataType="{x:Type global:FolderNode}" ItemsSource="{Binding Path=Children.Values}">
           <WrapPanel>
+
             <CheckBox />
+
+            <TextBlock Text="*" ToolTip="Contains selections further down" Foreground="Red" 
+                       Visibility="{Binding Mode=OneWay, Path=IsSubSelected, Converter={conv:BooleanToVisibilityConverter}}" />
+
             <TextBlock Style="{StaticResource TreeTextBlock}"
-                       FontStyle="{Binding Mode=OneTime, Path=IsFunky, Converter={local:BoolToItalicConverter}}"
-                       Foreground="{Binding Mode=OneTime, Path=IsFunky, Converter={local:BoolToSolidBrushConverter}, ConverterParameter='Red,Blue'}" />
+                       FontStyle="{Binding Mode=OneTime, Path=IsFunky, Converter={conv:BoolToItalicConverter}}"
+                       Foreground="{Binding Mode=OneTime, Path=IsFunky, Converter={conv:BoolToSolidBrushConverter}, ConverterParameter='Red,Blue'}" />
+            
+            <TextBlock Text="*!*" ToolTip="Previously recorded folder, no longer present" Foreground="Red" 
+                       Visibility="{Binding Mode=OneTime, Path=IsMissing, Converter={conv:BooleanToVisibilityConverter}}" />
           </WrapPanel>
         </HierarchicalDataTemplate>
 
         <HierarchicalDataTemplate DataType="{x:Type global:FileNode}" >
           <WrapPanel>
+            
             <CheckBox />
+            
             <TextBlock Style="{StaticResource TreeTextBlock}" />
+            
+            <TextBlock Text="*!*" ToolTip="Previously recorded file, no longer present" Foreground="Red" 
+                       Visibility="{Binding Mode=OneTime, Path=IsMissing, Converter={conv:BooleanToVisibilityConverter}}" />
           </WrapPanel>
         </HierarchicalDataTemplate>
 

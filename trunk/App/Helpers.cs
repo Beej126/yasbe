@@ -73,46 +73,4 @@ namespace YASBE
   }
 
 
-  //by making the ValueConverter a MarkupExtension we avoid the typical step of needing to create an instance of the converter in the XAML Resources block
-  public abstract class MarkupExtensionConverter : MarkupExtension
-  {
-    public override object ProvideValue(IServiceProvider serviceProvider)
-    {
-      return this;
-    }
-
-    public MarkupExtensionConverter() { }
-  }
-
-  public class BoolToItalicConverter : MarkupExtensionConverter, IValueConverter
-  {
-    public BoolToItalicConverter() { } //to avoid an XAML annoying warning: "No constructor for type 'xyz' has 0 parameters."  Somehow the inherited one doesn't do the trick!?!  I guess it's a reflection bug.
-
-    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-    {
-      return ((bool)value ? System.Windows.FontStyles.Italic : System.Windows.FontStyles.Normal);
-    }
-
-    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-    {
-      throw new NotImplementedException();
-    }
-  }
-
-  public class BoolToSolidBrushConverter : MarkupExtensionConverter, IValueConverter
-  {
-    public BoolToSolidBrushConverter() { } //to avoid an XAML annoying warning: "No constructor for type 'xyz' has 0 parameters."  Somehow the inherited one doesn't do the trick!?!  I guess it's a reflection bug.
-
-    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-    {
-      string[] colors = parameter.ToString().Split(',');
-      return new System.Windows.Media.BrushConverter().ConvertFromString((bool)value ? colors[0].Trim() : colors[1].Trim());
-    }
-
-    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-    {
-      throw new NotImplementedException();
-    }
-  }
-
 }
