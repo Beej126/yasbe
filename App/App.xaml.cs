@@ -37,7 +37,9 @@ namespace YASBE
 
     private void DefaultExceptionHandler(Exception ex)
     {
-      MessageBox.Show("Unexpected Error" + ((ex != null) ? ": " + ex.Message : ""));
+      while (ex != null && ex.InnerException != null) ex = ex.InnerException;
+      MessageBox.Show("Unexpected Error" + ((ex != null) ? ": " + ex.Message + "\r\n" + ex.StackTrace : ""));
+      App.Current.Shutdown(1);
     }
 
     protected override void OnExit(ExitEventArgs e)

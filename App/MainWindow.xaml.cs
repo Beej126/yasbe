@@ -29,8 +29,8 @@ namespace YASBE
     
     public MainWindow()
     {
-      LoadBackProfilesList();
       InitializeComponent();
+      LoadBackProfilesList();
       BackupFile.List.CollectionChanged += (s, a) => { if (a.NewItems != null) datagrid.ScrollIntoView(a.NewItems[0]); };
       datagrid.AutoGeneratingColumn += new EventHandler<DataGridAutoGeneratingColumnEventArgs>(datagrid_AutoGeneratingColumn);
     }
@@ -64,11 +64,6 @@ namespace YASBE
         MessageBox.Show("You are not an administrator");
       }
        * */
-    }
-
-    private void LoadSelectedBackupProfileSelectedFolders()
-    {
-      //FileSystemNode.LoadSelectedNodes(ds.Tables[1]);
     }
 
     private void LoadBackProfilesList()
@@ -176,11 +171,26 @@ namespace YASBE
       }
 
     }
+
+    private void cbxBackupProfiles_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+      using (Proc BackupProfileFolders_s = new Proc("BackupProfileFolders_s"))
+      {
+        BackupProfileFolders_s["@BackupProfileID"] = cbxBackupProfiles.SelectedValue;
+        FileSystemNode.LoadSelectedNodes(BackupProfileFolders_s.Table0);
+      }
+    }
+
+    private void GatherCandidates(object sender, RoutedEventArgs e)
+    {
+      DataTable t = FileSystemNode.GetSelected(MainWindow.GetBlankBackupProfileTable());
+
+    }
   }
 
-  public class FileTreeBackgroundConverter : WPFValueConverters.MarkupExtensionConverter, IMultiValueConverter
+  public class FileTreeBackgroundBrushConverter : WPFValueConverters.MarkupExtensionConverter, IMultiValueConverter
   {
-    public FileTreeBackgroundConverter() { } //to avoid an XAML annoying warning from XAML designer: "No constructor for type 'xyz' has 0 parameters."  Somehow the inherited one doesn't do the trick!?!  I guess it's a reflection bug.
+    public FileTreeBackgroundBrushConverter() { } //to avoid an annoying warning from XAML designer: "No constructor for type 'xyz' has 0 parameters."  Somehow the inherited one doesn't do the trick!?!  I guess it's a reflection bug.
 
     public object Convert(object[] values, Type targetType, object parameter, System.Globalization.CultureInfo culture)
     {
