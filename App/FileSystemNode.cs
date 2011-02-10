@@ -7,12 +7,17 @@ using System.Windows;
 using System.IO;
 using System.Data;
 
+using FileSystemNodes = System.Collections.Generic.Dictionary<string, FileSystemNode>; //nugget: type aliasing, very handy, basic inheritance isn't as clean
+
 public class FileSystemNode : DependencyObject
 {
-  public string FullPath { get; protected set; }
-  public string Name { get; protected set; }
+  private string _FancyName = null;
+  public string Name { get { return ((_FancyName == null) ? SubPath : _FancyName + " (" + SubPath + ")"); } }
+  public string FullPath { get { return (((Parent == null) ? "" : Parent.FullPath) + SubPath + ((this is FolderNode)?"\\":"")); } }
+  public string SubPath { get; protected set; }
   public FileSystemNode Parent { get; protected set; }
   public bool IsAncestorSelected { get { return (Parent != null && (Parent.IsSelected || Parent.IsAncestorSelected)); } } //nugget: i like simplicity of this line, it either immediately stops on the current parent or walks up the tree
+  public bool IsMissing { get; protected set; }
 
   public event Action IsSelectedChanged;
 
@@ -34,47 +39,125 @@ public class FileSystemNode : DependencyObject
     DependencyProperty.Register("IsSelected", typeof(bool), typeof(FileSystemNode),
     //when IsSelected changes, we have to refresh IsExcluded down the tree because IsExcluded = IsExcluded = (IsSelected && IsAncestorSelected);
     //this is implemented by the children subscribing to the parent's change event and the parent firing that event recursively
-    new UIPropertyMetadata(false, propertyChangedCallback: (o, a) => ((FileSystemNode)o).OnIsSelectedChanged()));
+    new UIPropertyMetadata(false, propertyChangedCallback: (o, a) => {
+      //ripple the selection both up the tree...
+      RefreshIsSubSelected(((FileSystemNode)o).Parent); 
+      //and down the tree...
+      ((FileSystemNode)o).OnIsSelectedChanged();
+    }));
 
+  // ****** careful what you put inside this method... it gets "back" fired for every decendent... that adds up fast!!!
   private void OnIsSelectedChanged()
   {
     IsExcluded = (IsSelected && IsAncestorSelected); //first set the current nodes IsExcluded status
-    if (IsSelectedChanged != null) IsSelectedChanged(); //then go fire all the Children's and since the Children's Children are wired to this same event it will recurse... pretty cool
+    if (IsSelectedChanged != null) IsSelectedChanged(); //then go fire all the Children's and since the Children's ***Children are wired to this same method*** (via constructor) it will recurse... pretty cool
   }
 
-  static private void LoadSelected(DataTable t)
+  static private void RefreshIsSubSelected(FileSystemNode node)
+  {
+    FolderNode folder = node as FolderNode;
+    if (node == null) return;
+    node.IsSubSelected = folder.Children.Where(n => n.Value.IsSubSelected || n.Value.IsSelected).Count() > 0; //gotsta admit, the linq extensions sure do come in amazingly handy
+    RefreshIsSubSelected(folder.Parent);
+  }
+
+  public bool IsSubSelected
+  {
+    get { return (bool)GetValue(IsSubSelectedProperty); }
+    set { SetValue(IsSubSelectedProperty, value); }
+  }
+
+  // Using a DependencyProperty as the backing store for IsSubSelected.  This enables animation, styling, binding, etc...
+  public static readonly DependencyProperty IsSubSelectedProperty =
+      DependencyProperty.Register("IsSubSelected", typeof(bool), typeof(FileSystemNode), new UIPropertyMetadata(false));
+
+  static public void LoadSelectedNodes(DataTable t)
   {
     foreach(DataRow r in t.Rows)
     {
-      string[] FullPath = r["FullPath"].ToString().Split('\\');
-      foreach(string Path in FullPath)
-      {
-
-      }
+      string[] FullPath = r["FullPath"].ToString().Split('\\').ToArray(); 
+      int depthcounter = 1;
+      LoadNode(null, FullPath, ref depthcounter);
     }
   }
 
-
-  public FileSystemNode(FileSystemNode Parent, FileSystemInfo fsi) 
+  static private void LoadNode(FolderNode parentnode, string[] FullPath, ref int depthcounter)
   {
-    this.Parent = Parent;
-    if (Parent != null) Parent.IsSelectedChanged += new Action(OnIsSelectedChanged); //all children subscribe to their parent's IsSelectedChanged to support keeping IsExcluded in sync
-    FullPath = fsi.FullName;
-    Name = fsi.Name;
-    FlatList.Add(this);
+    bool IsFolder = (FullPath.Last() == ""); //folders come with a trailing slash which creates an empty last element as a basic way to differentiate them from files
+    FileSystemNodes currentnodelist = (parentnode == null) ? RootDirectories : IsFolder ? parentnode.Children : null /* <= this should never exist, i.e. trying to load a file without having an existing parent's child list to add it to, because the parents get created as we go down the tree */;
+    string path = String.Join("\\", FullPath.Take(depthcounter) /*1 based index*/) + (IsFolder ? "\\" : "");
+
+    //if the current node doesn't show up in our tree...
+    FileSystemNode node = null;
+    if (!currentnodelist.TryGetValue(path, out node))
+    {
+      //then create it as a missing node (i.e. deleted since we last loaded this backup profile)
+      string name = FullPath[depthcounter-1]; //zero based index
+      string fullpath = String.Join("\\", FullPath);
+      if (IsFolder) node = new FolderNode(parentnode, name); 
+      else node = new FileNode(parentnode, name);
+
+      //TODO: the one visual bummer about this is that missing folders are added way at the bottom of the children, under the files
+      //  maybe that's sort of a good thing so they stand out even more... but i would've preferred them to be at the very top
+      //  since the Children are demand loaded with the filesystem before we can add to the list it's tough to design around w/o making things undesirably messy (e.g. "IsChildrenLoaded" flag, etc)
+      if (parentnode != null) parentnode.Children.Add(node.FullPath, node); 
+    }
+
+    //when we get to the bottom of the path, we've found our prey!
+    if (depthcounter++ == (IsFolder ? FullPath.Length - 1 : FullPath.Length)) //again, as stated above, folders come with an extra empty last element
+    {
+      node.IsSelected = true;
+      return; 
+    }
+
+    //otherwise, keep walking the tree
+    LoadNode(node as FolderNode, FullPath, ref depthcounter);
   }
 
-  static public FolderNode[] RootDirectories = (from drive in DriveInfo.GetDrives() where drive.IsReady select new FolderNode(null, drive.RootDirectory) { Name = drive.VolumeLabel + " (" + drive.Name + ")" }).ToArray();
+  public FileSystemNode(FileSystemNode Parent, FileSystemInfo fsi) : this(Parent, fsi.Name)
+  {
+    IsMissing = false;
+  }
 
-  static private List<FileSystemNode> _FlatList = null; //nugget: amazingly, as both a static initializer and a class constructor this was not instantiated before the instance constructors that required it!?!? so had to implement as a lazy getter, wild, really rocks what i thought i understood
-  static public List<FileSystemNode> FlatList { get { if (_FlatList == null) _FlatList = new List<FileSystemNode>(); return (_FlatList); } }
+  public FileSystemNode(FileSystemNode Parent, string Name)
+  {
+    this.Parent = Parent;
+    this.SubPath = Name;
+    if (Parent != null) Parent.IsSelectedChanged += new Action(OnIsSelectedChanged); //all children subscribe to their parent's IsSelectedChanged to support keeping IsExcluded in sync
+    //FlatList.Add(this);
+    IsMissing = true; //this constructor fires first when we chain them so the FileSystemInfo based constructor gets final say on this flag
+  }
+
+  //static public List<FileSystemNode> FlatList = new List<FileSystemNode>(); //nugget: interestingly complex case... since another Static initializer (RootDirectories) fires code that uses this Static variable, you have to put this one first in the source, or else it won't be initialized yet when called upon
+
+  static public FileSystemNodes RootDirectories = 
+    (from drive in DriveInfo.GetDrives() where drive.IsReady
+     select new FolderNode(null, drive.RootDirectory) {
+       SubPath = drive.Name.TrimEnd('\\'),
+       _FancyName = drive.VolumeLabel
+     } as FileSystemNode).ToDictionary((n) => n.FullPath, StringComparer.InvariantCultureIgnoreCase);
+
 
   static public DataTable GetSelected(DataTable t)
   {
-    var dummy = (from node in FlatList where node.IsSelected select NewDataRow(t, node)).Last();  //this basically just saves us from looping twice, once to filter and once to convert to DataTable
+    t.BeginLoadData(); //basically this disables constraints and that's what we want in this particular case
+    //(from node in FlatList where node.IsSelected select NewDataRow(t, node)).Last();  //this basically just saves us from looping twice, once to filter and once to convert to DataTable
     //nugget: all the approaches out there in Google land are no more glamorous... e.g.: http://msdn.microsoft.com/en-us/library/bb669096.aspx
+    //t.EndLoadData(); //not even going to re-enable the constraints at the end
+
+    WalkDownSelected(RootDirectories, t);
 
     return t; //just makes the calling syntax a little more compact
+  }
+
+  //leverage IsSubSelected to do an efficient walk down tree
+  static private void WalkDownSelected(FileSystemNodes nodelist, DataTable t)
+  {
+    foreach (FileSystemNode n in nodelist.Values)
+    {
+      if (n.IsSelected) NewDataRow(t, n);
+      if (n.IsSubSelected) WalkDownSelected(((FolderNode)n).Children, t);
+    }
   }
 
   static private int NewDataRow(DataTable t, FileSystemNode f)
@@ -89,11 +172,10 @@ public class FileSystemNode : DependencyObject
 
 }
 
-
-
 public class FileNode : FileSystemNode
 {
   public FileNode(FileSystemNode Parent, FileInfo file) : base(Parent, file) { }
+  public FileNode(FileSystemNode Parent, string Name) : base(Parent, Name) { }
 }
 
 public class FolderNode : FileSystemNode
@@ -105,33 +187,20 @@ public class FolderNode : FileSystemNode
     IsFunky = folder.Attributes.HasFlag(FileAttributes.ReparsePoint);
   }
 
-  static public void GetSelectedFolders(DataTable t, string FieldName, FileSystemNode[] current)
-  {
-    if (current == null) return;
+  //for recreating missing nodes... i.e. folders that have been deleted since we last saved the backup profile
+  public FolderNode(FileSystemNode Parent, string Name) : base(Parent, Name) {}
 
-    foreach (FolderNode f in current.OfType<FolderNode>().ToArray())
-    {
-      if (f.IsSelected)
-      {
-        DataRow r = t.NewRow();
-        r[FieldName] = f.FullPath;
-        t.Rows.Add(r);
-      }
-      GetSelectedFolders(t, FieldName, f._Children);
-    }
-  }
-
-
-  protected FileSystemNode[] _Children = null;
-  public FileSystemNode[] Children
+  protected FileSystemNodes _Children = null;
+  public FileSystemNodes Children
   {
     get
     {
       if (_Children != null || IsFunky) return (_Children);
-      DirectoryInfo dir = new DirectoryInfo(FullPath);
+      DirectoryInfo dir = new DirectoryInfo(FullPath+"\\"); //otherwise a "D:" by itself would load the current working directory of the application running on D: (or wherever)... amazingly annoying non-bug
+
       _Children = (from subdir in GetSubdirs(dir) select new FolderNode(this, subdir)).Union<FileSystemNode>( //nugget: this is pretty cool
                     (from file in GetFiles(dir) select new FileNode(this, file))
-                  ).ToArray();
+                  ).ToDictionary((n) => n.FullPath, StringComparer.InvariantCultureIgnoreCase);
 
       return (_Children);
     }
@@ -142,6 +211,10 @@ public class FolderNode : FileSystemNode
     try
     {
       return (dir.GetDirectories());
+    }
+    catch (DirectoryNotFoundException)
+    {
+      return (new DirectoryInfo[0]);
     }
     catch (UnauthorizedAccessException)
     {
@@ -156,6 +229,10 @@ public class FolderNode : FileSystemNode
     try
     {
       return (dir.GetFiles());
+    }
+    catch (DirectoryNotFoundException)
+    {
+      return (new FileInfo[0]);
     }
     catch (UnauthorizedAccessException)
     {

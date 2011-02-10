@@ -29,29 +29,28 @@ namespace YASBE
     
     public MainWindow()
     {
+      LoadBackProfilesList();
       InitializeComponent();
       BackupFile.List.CollectionChanged += (s, a) => { if (a.NewItems != null) datagrid.ScrollIntoView(a.NewItems[0]); };
       datagrid.AutoGeneratingColumn += new EventHandler<DataGridAutoGeneratingColumnEventArgs>(datagrid_AutoGeneratingColumn);
     }
 
-    public DataTable BackupProfiles { get; private set; }
+    //public DataTable BackupProfiles { get; private set; }
 
-    static private DataTable _BlankBackupProfileTable = null;
+    static private DataTable _BlankBackupProfileFolderTable = null;
 
     static public DataTable GetBlankBackupProfileTable()
     {
-      return (_BlankBackupProfileTable.Clone());
+      return (_BlankBackupProfileFolderTable.Clone());
     }
 
     private bool _beenhere = false;
     private Style _RightAlignStyle = null;
     void MainWindow_Loaded(object sender, RoutedEventArgs e)
     {
-      if (_beenhere) return; _beenhere = true;
+      if (_beenhere) return; _beenhere = true; //this sucks but is actually recommended by an MSDN MVP: http://social.msdn.microsoft.com/Forums/en/wpf/thread/39ce4ebd-75a6-46d5-b303-2e0f89c6eb8d
 
       _RightAlignStyle = datagrid.FindResource("RightAlignStyle") as Style;
-
-      LoadProfiles();
 
       /*
       bool isAdmin = new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator) ? true : false;
@@ -65,19 +64,21 @@ namespace YASBE
         MessageBox.Show("You are not an administrator");
       }
        * */
-
     }
 
-    private void LoadProfiles()
+    private void LoadSelectedBackupProfileSelectedFolders()
     {
+      //FileSystemNode.LoadSelectedNodes(ds.Tables[1]);
+    }
+
+    private void LoadBackProfilesList()
+    {
+      //load initial backup profile names drop down list so that a previously selected entry stored in Property.Settings has something to Bind to when the Window first comes up
       using (Proc BackupProfiles_s = new Proc("BackupProfiles_s"))
       {
-        BackupProfiles_s["@BackupProfileID"] = cbxBackupProfiles.SelectedValue;
-        DataSet ds = BackupProfiles_s.ExecuteDataSet();
-        BackupProfiles = ds.Tables[0];
-        _BlankBackupProfileTable = ds.Tables[1];
+        cbxBackupProfiles.ItemsSource = BackupProfiles_s.Table0.DefaultView;
+        _BlankBackupProfileFolderTable = BackupProfiles_s.dataSet.Tables[1];
       }
-
     }
 
 
@@ -177,7 +178,7 @@ namespace YASBE
     }
   }
 
-  public class FileTreeBackgroundConverter : MarkupExtensionConverter, IMultiValueConverter
+  public class FileTreeBackgroundConverter : WPFValueConverters.MarkupExtensionConverter, IMultiValueConverter
   {
     public FileTreeBackgroundConverter() { } //to avoid an XAML annoying warning from XAML designer: "No constructor for type 'xyz' has 0 parameters."  Somehow the inherited one doesn't do the trick!?!  I guess it's a reflection bug.
 
