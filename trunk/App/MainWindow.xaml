@@ -77,6 +77,8 @@
               <Image Source="Forbidden 02.png" />
             </StackPanel>
           </Button>
+          
+          <Button Content="Gather All Candidate Files" Click="GatherCandidates_Click" />
 
           <Label FontSize="32" Content="Status:" />
           <Label FontSize="32" FontWeight="Bold" Content="Stopped" Name="lblStatus" />
@@ -84,12 +86,15 @@
         </StackPanel>
 
         <StackPanel Orientation="Horizontal" >
+        </StackPanel>
+
+        <StackPanel Orientation="Horizontal" >
           <Label FontSize="24" Content="Current Backup Profile:" />
           <ComboBox Name="cbxBackupProfiles" 
                     DisplayMemberPath="Name" 
                     SelectedValuePath="BackupProfileID" 
-                    SelectedValue="{Binding Mode=TwoWay, Source={x:Static Properties:Settings.Default}, Path=SelectedBackupProfile}"
-                    SelectionChanged="">
+                    SelectedValue="{Binding Mode=TwoWay, Source={x:Static Properties:Settings.Default}, Path=SelectedBackupProfileID}"
+                    SelectionChanged="cbxBackupProfiles_SelectionChanged">
             <ComboBox.ItemContainerStyle>
               <Style>
                 <Style.Triggers>
@@ -134,7 +139,7 @@
           <Setter Property="IsChecked" Value="{Binding Mode=TwoWay, Path=IsSelected}" />
           <Setter Property="Background">
             <Setter.Value>
-              <MultiBinding  Converter="{local:FileTreeBackgroundConverter}" Mode="OneWay">
+              <MultiBinding  Converter="{local:FileTreeBackgroundBrushConverter}" Mode="OneWay">
                 <Binding Path="IsSelected" Mode="OneWay" />
                 <Binding Path="IsExcluded" Mode="OneWay" />
               </MultiBinding>
@@ -149,7 +154,7 @@
           <Setter Property="Text" Value="{Binding Mode=OneTime, Path=Name}" />
           <Setter Property="Background">
             <Setter.Value>
-              <MultiBinding Converter="{local:FileTreeBackgroundConverter}" Mode="OneWay">
+              <MultiBinding Converter="{local:FileTreeBackgroundBrushConverter}" Mode="OneWay">
                 <Binding Path="IsSelected" Mode="OneWay" />
                 <Binding Path="IsExcluded" Mode="OneWay" />
               </MultiBinding>

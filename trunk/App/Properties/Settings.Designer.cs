@@ -26,12 +26,12 @@ namespace YASBE.Properties {
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("0")]
-        public int SelectedBackupProfile {
+        public int SelectedBackupProfileID {
             get {
-                return ((int)(this["SelectedBackupProfile"]));
+                return ((int)(this["SelectedBackupProfileID"]));
             }
             set {
-                this["SelectedBackupProfile"] = value;
+                this["SelectedBackupProfileID"] = value;
             }
         }
     }
