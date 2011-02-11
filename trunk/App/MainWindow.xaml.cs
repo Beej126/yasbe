@@ -181,10 +181,16 @@ namespace YASBE
       }
     }
 
-    private void GatherCandidates(object sender, RoutedEventArgs e)
+    private void GatherCandidates_Click(object sender, RoutedEventArgs e)
     {
+      return;
       DataTable t = FileSystemNode.GetSelected(MainWindow.GetBlankBackupProfileTable());
+      foreach (DataRow r in t.Rows)
+      {
+        string p = r["Fullpath"].ToString();
+        DirectoryInfo d = new DirectoryInfo(p);
 
+      }
     }
   }
 
