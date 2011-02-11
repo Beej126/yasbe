@@ -49,9 +49,7 @@ public class FileSystemNode : DependencyObject
   // ****** careful what you put inside this method... it gets "back" fired for every decendent (event assignment in FileSystemNode( constructor)... that adds up fast!!!
   private void OnIsSelectedChanged()
   {
-    IsExcluded = (
-      IsSelected && IsAncestorSelected && (!IsSubSelected || this is FileNode)
-    ); //first set the current nodes IsExcluded status
+    IsExcluded = IsSelected && IsAncestorSelected && (!IsSubSelected || this is FileNode); //NUGGET: 2011_02_11 12:56AM NAILED IT!!!! FUCK YEAH... this took me 4EVER
     if (IsSelectedChanged != null) IsSelectedChanged(); //then go fire all the Children's and since the Children's ***Children are wired to this same method*** (via constructor) it will recurse... pretty cool
   }
 
