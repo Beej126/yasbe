@@ -46,10 +46,12 @@ public class FileSystemNode : DependencyObject
       ((FileSystemNode)o).OnIsSelectedChanged();
     }));
 
-  // ****** careful what you put inside this method... it gets "back" fired for every decendent... that adds up fast!!!
+  // ****** careful what you put inside this method... it gets "back" fired for every decendent (event assignment in FileSystemNode( constructor)... that adds up fast!!!
   private void OnIsSelectedChanged()
   {
-    IsExcluded = (IsSelected && IsAncestorSelected); //first set the current nodes IsExcluded status
+    IsExcluded = (
+      IsSelected && IsAncestorSelected && (!IsSubSelected || this is FileNode)
+    ); //first set the current nodes IsExcluded status
     if (IsSelectedChanged != null) IsSelectedChanged(); //then go fire all the Children's and since the Children's ***Children are wired to this same method*** (via constructor) it will recurse... pretty cool
   }
 
