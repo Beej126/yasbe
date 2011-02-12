@@ -263,6 +263,20 @@ namespace WPFValueConverters
 
   }
 
+  public class NotNullToVisibleConverter : MarkupExtensionConverter, IValueConverter
+  {
+    public NotNullToVisibleConverter() { } //to avoid an annoying warning from XAML designer: "No constructor for type 'xyz' has 0 parameters."  Somehow the inherited one doesn't do the trick!?!  I guess it's a reflection bug.
+
+    public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
+    {
+      return ((value != null) ? Visibility.Visible : Visibility.Collapsed);
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
+    {
+      throw new NotImplementedException();
+    }
+  }
 
 
 }

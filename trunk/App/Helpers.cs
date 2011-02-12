@@ -32,15 +32,6 @@ namespace YASBE
     static extern bool CreateSymbolicLink(string lpSymlinkFileName, string lpTargetFileName, SYMBOLIC_LINK_FLAG dwFlags);
 
 
-    static private readonly Type[] numericTypes = new Type[] { typeof(Byte), typeof(Decimal), typeof(Double),
-        typeof(Int16), typeof(Int32), typeof(Int64), typeof(SByte),
-        typeof(Single), typeof(UInt16), typeof(UInt32), typeof(UInt64)};
-
-    public static bool IsNumeric(this Type type)
-    {
-      return (type == null)?false:numericTypes.Contains(type);
-    }
-
     static public string GetMD5HashFromFile(string fileName)
     {
       FileStream file = new FileStream(fileName, FileMode.Open);
@@ -55,9 +46,6 @@ namespace YASBE
       }
       return sb.ToString();
     }
-
-
-    static public bool DesignMode { get { return (System.Diagnostics.Process.GetCurrentProcess().ProcessName == "devenv"); } }
 
   }
 

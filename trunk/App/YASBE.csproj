@@ -65,10 +65,14 @@
     <Compile Include="Assert.cs" />
     <Compile Include="ExtensionMethods.cs" />
     <Compile Include="FileSystemNode.cs" />
+    <Compile Include="GridLengthAnimation.cs" />
     <Compile Include="ReflectionHelpers.cs" />
+    <Compile Include="RoutedCommands.cs" />
+    <Compile Include="scratch.cs" />
     <Compile Include="Settings.cs" />
     <Compile Include="SqlClientHelpers.cs" />
     <Compile Include="StringEvaluator.cs" />
+    <Compile Include="WPFHelpers.cs" />
     <Compile Include="WPFValueConverters.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
