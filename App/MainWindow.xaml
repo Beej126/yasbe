@@ -4,7 +4,7 @@
         xmlns:global="clr-namespace:;assembly="
         xmlns:local="clr-namespace:YASBE"
         xmlns:SysIO="clr-namespace:System.IO;assembly=mscorlib"
-        Title="MainWindow" Height="500" Width="800" WindowState="Maximized"
+        Title="MainWindow" WindowState="Maximized"
         Loaded="MainWindow_Loaded"
         DataContext="{Binding RelativeSource={RelativeSource Self}}"
         xmlns:Properties="clr-namespace:YASBE.Properties"
@@ -12,7 +12,19 @@
         xmlns:conv="clr-namespace:WPFValueConverters"
  >
 
+  <Window.CommandBindings>
+    <CommandBinding Command="{x:Static local:RoutedCommands.CopyToExclusions}" Executed="CopyToExclusions_Executed" />
+  </Window.CommandBindings>
+
+
   <Window.Resources>
+    <Style x:Key="ReadOnlyTextBox" TargetType="{x:Type TextBox}" >
+      <Setter Property="Background" Value="#eeeeee"/>
+      <Setter Property="IsTabStop" Value="False"/>
+      <Setter Property="IsReadOnly" Value="True" />
+      <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+
     <Style x:Key="BaseTextBlockStyle" TargetType="TextBlock">
       <Setter Property="VerticalAlignment" Value="Center" />
       <Setter Property="Margin" Value="0 0 5 0" />
@@ -44,21 +56,33 @@
       <Setter Property="VerticalAlignment" Value="Center" />
     </Style>
 
+    <Style TargetType="GroupBox">
+      <Setter Property="HeaderTemplate">
+        <Setter.Value>
+          <DataTemplate>
+            <TextBlock Text="{Binding}" Foreground="Black" FontSize="16" />
+          </DataTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
 
   </Window.Resources>
   
   <Grid>
     
     <Grid.ColumnDefinitions>
-      <ColumnDefinition />
-      <ColumnDefinition />
+      <ColumnDefinition Width="1*" />
+      <ColumnDefinition Width="Auto" />
+      <ColumnDefinition Width="2*" />
     </Grid.ColumnDefinitions>
     <Grid.RowDefinitions>
       <RowDefinition Height="Auto"  />
       <RowDefinition Height="*" />
     </Grid.RowDefinitions>
     
-    <Border Background="LightSteelBlue" Padding="10" Grid.Row="0" Grid.ColumnSpan="2"  >
+    <GridSplitter Grid.Column="1" Grid.Row="1" ResizeDirection="Columns" Width="10" ResizeBehavior="PreviousAndNext" VerticalAlignment="Stretch" />
+    
+    <Border Background="LightSteelBlue" Padding="10" Grid.Row="0" Grid.ColumnSpan="3"  >
       
       <StackPanel Orientation="Vertical">
       
@@ -77,9 +101,18 @@
               <Image Source="Forbidden 02.png" />
             </StackPanel>
           </Button>
-          
-          <Button Content="Gather All Candidate Files" Click="GatherCandidates_Click" />
 
+          <WrapPanel Orientation="Horizontal" Width="350">
+            <WrapPanel.Resources>
+              <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                <Setter Property="Margin" Value="3 3 0 0" />
+              </Style>
+            </WrapPanel.Resources>
+            <Button Content="Get All Current Files" Click="GatherCandidates_Click" />
+            <Button Click="GatherCandidates_Click" Content="Compare to Previous (incremental)" />
+            <Button Content="Stamp Current Batch as 'Archived'" />
+          </WrapPanel>
+          
           <Label FontSize="32" Content="Status:" />
           <Label FontSize="32" FontWeight="Bold" Content="Stopped" Name="lblStatus" />
         
@@ -89,25 +122,43 @@
         </StackPanel>
 
         <StackPanel Orientation="Horizontal" >
+          <Button Content="Save Profile Parameters" Click="BackupProfileSave_Click" />
           <Label FontSize="24" Content="Current Backup Profile:" />
           <ComboBox Name="cbxBackupProfiles" 
                     DisplayMemberPath="Name" 
                     SelectedValuePath="BackupProfileID" 
                     SelectedValue="{Binding Mode=TwoWay, Source={x:Static Properties:Settings.Default}, Path=SelectedBackupProfileID}"
-                    SelectionChanged="cbxBackupProfiles_SelectionChanged">
-            <ComboBox.ItemContainerStyle>
+                    SelectionChanged="cbxBackupProfiles_SelectionChanged" />
+            <!--ComboBox.ItemContainerStyle>
               <Style>
                 <Style.Triggers>
                   <DataTrigger Binding ="{Binding Mode=OneWay, Path=BackupProfileID}" Value="1">
                     <Setter Property="ComboBoxItem.IsEnabled" Value="False"/>
-                    <!-- nugget: prevent keyboard selection of disabled ComboBox items -->
                   </DataTrigger>
                 </Style.Triggers>
               </Style>
             </ComboBox.ItemContainerStyle>
-          </ComboBox>
+          </ComboBox-->
           
-          <Button Content="Save" Click="BackupProfileSave_Click" />
+          <Label Content="Media Size:" />
+          <ComboBox Name="cbxMediaSize" DisplayMemberPath="Name" SelectedValuePath="MediaSizeID" diagnostics:PresentationTraceSources.TraceLevel="High"
+                    SelectedValue="{Binding Mode=TwoWay, ElementName=cbxBackupProfiles, Path=SelectedItem[MediaSizeID]}" />
+          <Label Content="{Binding Mode=OneWay, ElementName=cbxBackupProfiles, Path=SelectedItem[MediaSizeID]}" />
+
+        </StackPanel>
+
+        <StackPanel Orientation="Horizontal" >
+          <Button Content="New Incremental Backup" Click="NewIncremental_Click" />
+          <Label Content="Active Incremental #:" FontSize="14" FontWeight="Bold" />
+          <TextBlock DataContext="{Binding Mode=OneWay, Path=ActiveIncrementalRow}" 
+                     Visibility="{Binding Mode=OneWay, Converter={conv:NotNullToVisibleConverter}}"> <!-- blank path passes DataContext object to converter -->
+            <TextBlock.Text>
+              <MultiBinding StringFormat="{}{0} - {1:MMM dd, yyyy}" >
+                <Binding Mode="OneWay" Path="[IncrementalID]" />
+                <Binding Mode="OneWay" Path="[BackupDate]" />
+              </MultiBinding>
+            </TextBlock.Text>
+          </TextBlock>
         </StackPanel>
 
         <StackPanel Orientation="Horizontal" Margin="0 10 0 0">
@@ -129,80 +180,136 @@
       </StackPanel>
     </Border>
 
-    <!--nugget: binding to a Dictionary<> requires additional Path=Values -->
-    <TreeView Grid.Row="1" Grid.Column="0" Name="treeFolders" ItemsSource="{Binding Source={x:Static global:FileSystemNode.RootDirectories}, Path=Values}">
-      <TreeView.Resources>
+    <Grid Grid.Row="1" Grid.Column="2">
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="*" />
+      </Grid.RowDefinitions>
+      
+      <GroupBox Header="Incremental Backup History"  >
+        <DataGrid Name="gridIncrementalHistory" AutoGenerateColumns="True" MaxHeight="100" IsReadOnly="True" HeadersVisibility="Column">
+          <DataGrid.ContextMenu>
+            <ContextMenu>
+              <MenuItem Header="Make Active" Click="MakeActiveIncremental_Click" />
+            </ContextMenu>
+          </DataGrid.ContextMenu>
+        </DataGrid>
+      </GroupBox>
+      
+      <GroupBox Header="Current Backup Files Working Set" Grid.Row="1" >
+        <DataGrid Name="gridFilesWorkingSet" IsReadOnly="True" HeadersVisibility="Column"
+                  AutoGenerateColumns="True" AutoGeneratingColumn="gridFilesWorkingSet_AutoGeneratingColumn" 
+                  ItemsSource="{Binding Mode=OneWay, Source={x:Static local:BackupFile.List}}">
+          <DataGrid.Resources>
+            <Style TargetType="{x:Type TextBlock}">
+              <Setter Property="TextAlignment" Value="Right" />
+              <Setter Property="Foreground" Value="Red" />
+            </Style>
 
-        <Style TargetType="CheckBox">
-          <Setter Property="Margin" Value="0 0 3 0" />
-          <Setter Property="VerticalAlignment" Value="Center" />
-          <Setter Property="IsChecked" Value="{Binding Mode=TwoWay, Path=IsSelected}" />
-          <Setter Property="Background">
-            <Setter.Value>
-              <MultiBinding  Converter="{local:FileTreeBackgroundBrushConverter}" Mode="OneWay">
-                <Binding Path="IsSelected" Mode="OneWay" />
-                <Binding Path="IsExcluded" Mode="OneWay" />
-              </MultiBinding>
-            </Setter.Value>
-          </Setter>
-        </Style>
+            <Style x:Key="RightAlignStyling" TargetType="{x:Type TextBlock}">
+              <Setter Property="TextAlignment" Value="Right" />
+            </Style>
+            
+          </DataGrid.Resources>
+        </DataGrid>
+      </GroupBox>
+    </Grid>
 
-        <!-- nugget: very odd, the exact same Style that worked for ComboBox wouldn't for TextBlock unless applied via StaticResource to the key'd Style??? -->
-        <Style x:Key="TreeTextBlock" TargetType="TextBlock">
-          <Setter Property="Padding" Value="2 0 4 1" />
-          <Setter Property="VerticalAlignment" Value="Top" />
-          <Setter Property="Text" Value="{Binding Mode=OneTime, Path=Name}" />
-          <Setter Property="Background">
-            <Setter.Value>
-              <MultiBinding Converter="{local:FileTreeBackgroundBrushConverter}" Mode="OneWay">
-                <Binding Path="IsSelected" Mode="OneWay" />
-                <Binding Path="IsExcluded" Mode="OneWay" />
-              </MultiBinding>
-            </Setter.Value>
-          </Setter>
-        </Style>
+    <Grid Grid.Row="1">
+      <Grid.RowDefinitions>
+        <RowDefinition Height="*" />
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="Auto" />
+      </Grid.RowDefinitions>
 
-        <HierarchicalDataTemplate DataType="{x:Type global:FolderNode}" ItemsSource="{Binding Path=Children.Values}">
-          <WrapPanel>
+      <!--GridSplitter Grid.Row="1" ResizeDirection="Rows" Height="10" ResizeBehavior="PreviousAndNext"  HorizontalAlignment="Stretch" /-->
 
-            <CheckBox />
+      <GroupBox Header="Selected Backup Folders">
+        <TreeView Name="treeFolders" ItemsSource="{Binding Source={x:Static global:FileSystemNode.RootDirectories}, Path=Values}"
+                  BorderThickness="0" Padding="0 4 5 2" >
+        <!--nugget: binding to a Dictionary<> requires additional Path=Values -->
+        <TreeView.Resources>
 
-            <TextBlock Text="*" ToolTip="Contains selections further down" Foreground="Red" 
+          <Style TargetType="CheckBox">
+            <Setter Property="Margin" Value="0 0 3 0" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="IsChecked" Value="{Binding Mode=TwoWay, Path=IsSelected}" />
+            <Setter Property="Background">
+              <Setter.Value>
+                <MultiBinding  Converter="{local:FileTreeBackgroundBrushConverter}" Mode="OneWay">
+                  <Binding Path="IsSelected" Mode="OneWay" />
+                  <Binding Path="IsExcluded" Mode="OneWay" />
+                </MultiBinding>
+              </Setter.Value>
+            </Setter>
+          </Style>
+
+          <!-- nugget: very odd, the exact same Style that worked for ComboBox wouldn't for TextBlock unless applied via StaticResource to the key'd Style??? -->
+          <Style x:Key="TreeTextBlock" TargetType="TextBlock">
+            <Setter Property="Padding" Value="2 0 4 1" />
+            <Setter Property="VerticalAlignment" Value="Top" />
+            <Setter Property="Text" Value="{Binding Mode=OneTime, Path=Name}" />
+            <Setter Property="Background">
+              <Setter.Value>
+                <MultiBinding Converter="{local:FileTreeBackgroundBrushConverter}" Mode="OneWay">
+                  <Binding Path="IsSelected" Mode="OneWay" />
+                  <Binding Path="IsExcluded" Mode="OneWay" />
+                </MultiBinding>
+              </Setter.Value>
+            </Setter>
+          </Style>
+
+          <HierarchicalDataTemplate DataType="{x:Type global:FolderNode}" ItemsSource="{Binding Path=Children.Values}">
+            <WrapPanel>
+              <!--WrapPanel.ContextMenu>
+                <ContextMenu>
+                  <MenuItem Header="Copy Path to Exclusions" Command="{x:Static local:RoutedCommands.CopyToExclusions}" CommandParameter="{Binding Mode=OneTime, Path=FullPath}" />
+                </ContextMenu>
+              </WrapPanel.ContextMenu-->
+
+              <CheckBox />
+
+              <TextBlock Text="*" ToolTip="Contains selections further down" Foreground="Red" 
                        Visibility="{Binding Mode=OneWay, Path=IsSubSelected, Converter={conv:BooleanToVisibilityConverter}}" />
 
-            <TextBlock Style="{StaticResource TreeTextBlock}"
-                       FontStyle="{Binding Mode=OneTime, Path=IsFunky, Converter={conv:BoolToItalicConverter}}"
-                       Foreground="{Binding Mode=OneTime, Path=IsFunky, Converter={conv:BoolToSolidBrushConverter}, ConverterParameter='Red,Blue'}" />
-            
-            <TextBlock Text="*!*" ToolTip="Previously recorded folder, no longer present" Foreground="Red" 
+              <TextBlock Style="{StaticResource TreeTextBlock}" 
+                         FontStyle="{Binding Mode=OneTime, Path=IsFunky, Converter={conv:BoolToItalicConverter}}"
+                         Foreground="{Binding Mode=OneTime, Path=IsFunky, Converter={conv:BoolToSolidBrushConverter}, ConverterParameter='Red,Blue'}" />
+
+              <TextBlock Text="*!*" ToolTip="Previously recorded folder, no longer present" Foreground="Red" 
                        Visibility="{Binding Mode=OneTime, Path=IsMissing, Converter={conv:BooleanToVisibilityConverter}}" />
-          </WrapPanel>
-        </HierarchicalDataTemplate>
+            </WrapPanel>
+          </HierarchicalDataTemplate>
 
-        <HierarchicalDataTemplate DataType="{x:Type global:FileNode}" >
-          <WrapPanel>
-            
-            <CheckBox />
-            
-            <TextBlock Style="{StaticResource TreeTextBlock}" />
-            
-            <TextBlock Text="*!*" ToolTip="Previously recorded file, no longer present" Foreground="Red" 
+          <HierarchicalDataTemplate DataType="{x:Type global:FileNode}" >
+            <WrapPanel>
+
+              <CheckBox />
+
+              <TextBlock Style="{StaticResource TreeTextBlock}" />
+
+              <TextBlock Text="*!*" ToolTip="Previously recorded file, no longer present" Foreground="Red" 
                        Visibility="{Binding Mode=OneTime, Path=IsMissing, Converter={conv:BooleanToVisibilityConverter}}" />
-          </WrapPanel>
-        </HierarchicalDataTemplate>
+            </WrapPanel>
+          </HierarchicalDataTemplate>
 
 
-      </TreeView.Resources>
-      
-    </TreeView>
+        </TreeView.Resources>
 
-    <DataGrid Grid.Row="1" Grid.Column="1" Name="datagrid" AutoGenerateColumns="True" 
-              ItemsSource="{Binding Mode=OneWay, Source={x:Static local:BackupFile.List}}">
-      <DataGrid.Resources>
-        <Style x:Key="RightAlignStyle" TargetType="{x:Type TextBlock}">
-          <Setter Property="TextAlignment" Value="Right" />
-        </Style>
-      </DataGrid.Resources>
-    </DataGrid>
+      </TreeView>
+      </GroupBox>
+
+      <!--GroupBox Grid.Row="2" >
+        <GroupBox.Header>
+          <StackPanel Orientation="Horizontal">
+            <TextBlock Text="Exclusions" FontSize="15" />
+            <TextBlock Text="(found anywhere in the path)" VerticalAlignment="Bottom" />
+          </StackPanel>
+        </GroupBox.Header>
+        <TextBox TextWrapping="WrapWithOverflow" AcceptsReturn="True" Name="txtExclusions" />
+      </GroupBox-->
+
+    </Grid>
+
   </Grid>
 </Window>

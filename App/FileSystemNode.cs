@@ -7,6 +7,8 @@ using System.Windows;
 using System.IO;
 using System.Data;
 
+using System.Collections.Specialized;
+
 using FileSystemNodes = System.Collections.Generic.Dictionary<string, FileSystemNode>; //nugget: type aliasing, very handy, basic inheritance isn't as clean
 
 public class FileSystemNode : DependencyObject
@@ -49,15 +51,24 @@ public class FileSystemNode : DependencyObject
   // ****** careful what you put inside this method... it gets "back" fired for every decendent (event assignment in FileSystemNode( constructor)... that adds up fast!!!
   private void OnIsSelectedChanged()
   {
-    IsExcluded = IsSelected && IsAncestorSelected && (!IsSubSelected || this is FileNode); //NUGGET: 2011_02_11 12:56AM NAILED IT!!!! FUCK YEAH... this took me 4EVER
+    SetIsExcluded();
     if (IsSelectedChanged != null) IsSelectedChanged(); //then go fire all the Children's and since the Children's ***Children are wired to this same method*** (via constructor) it will recurse... pretty cool
+  }
+
+  private void SetIsExcluded()
+  {
+    IsExcluded = IsSelected && IsAncestorSelected && (!IsSubSelected /*this is redundant because filenodes can't be subselected: || this is FileNode*/); //NUGGET: 2011_02_11 12:56AM NAILED IT!!!! FUCK YEAH... this took me 4EVER
   }
 
   static private void RefreshIsSubSelected(FileSystemNode node)
   {
     FolderNode folder = node as FolderNode;
     if (node == null) return;
+
     node.IsSubSelected = folder.Children.Where(n => n.Value.IsSubSelected || n.Value.IsSelected).Count() > 0; //gotsta admit, the linq extensions sure do come in amazingly handy
+
+    node.SetIsExcluded(); //must do this after setting IsSubSelected since it depends on that property
+
     RefreshIsSubSelected(folder.Parent);
   }
 
@@ -135,39 +146,62 @@ public class FileSystemNode : DependencyObject
      select new FolderNode(null, drive.RootDirectory) {
        SubPath = drive.Name.TrimEnd('\\'),
        _FancyName = drive.VolumeLabel
-     } as FileSystemNode).ToDictionary((n) => n.FullPath, StringComparer.InvariantCultureIgnoreCase);
+     } as FileSystemNode).ToDictionary((n) => n.FullPath, StringComparer.OrdinalIgnoreCase);
 
 
-  static public DataTable GetSelected(DataTable t)
+  static public DataTable GetSelected(DataTable t, List<FolderNode> IncludedFolders = null, List<string> ExcludedFiles = null)
   {
     t.BeginLoadData(); //basically this disables constraints and that's what we want in this particular case
     //(from node in FlatList where node.IsSelected select NewDataRow(t, node)).Last();  //this basically just saves us from looping twice, once to filter and once to convert to DataTable
     //nugget: all the approaches out there in Google land are no more glamorous... e.g.: http://msdn.microsoft.com/en-us/library/bb669096.aspx
     //t.EndLoadData(); //not even going to re-enable the constraints at the end
 
-    WalkDownSelected(RootDirectories, t);
+    WalkDownSelected(RootDirectories, t, IncludedFolders, ExcludedFiles);
 
     return t; //just makes the calling syntax a little more compact
   }
 
-  //leverage IsSubSelected to do an efficient walk down tree
-  static private void WalkDownSelected(FileSystemNodes nodelist, DataTable t)
+  static private void WalkDownSelected(FileSystemNodes nodelist, DataTable t, List<FolderNode> IncludedFolders, List<string> ExcludedFiles)
   {
     foreach (FileSystemNode n in nodelist.Values)
     {
+
+      if (IncludedFolders != null)
+      {
+        //good concepts to keep in mind when understanding the tree walk logic:
+        //  folders are the only thing that form the hierarchy (i know, duh)
+        //  but that means we're always only *traversing* down folder nodes, never file nodes
+        //  yet at each level, we have a list of Children which are both folders and files... which can be either Included or Excluded
+
+        //to gather a list of candidate files...
+        //we just need to materialize two sets... and then combine that info to reach our final list:
+        // 1) included directores - with either subfolder scanning or not
+        // 2) excluded files - because an excluded folder is represented by it's absence in the included list
+
+        //as we walk down each folder node... 
+        // for an IncludedFolder, IsSubSelected will tell us whether to subscan or just process the single folder => DirectoryInfo.GetDirectories(folder, IsSubSelected?SearchOption.None:SearchOption.AllDirectories)
+        // excluded files are those children which are files and IsExcluded right???
+
+        if (n is FolderNode && (n.IsAncestorSelected || n.IsSelected) && !n.IsExcluded) IncludedFolders.Add(n as FolderNode);
+        else if (n is FileNode && n.IsExcluded) ExcludedFiles.Add((n as FileNode).FullPath);
+      }
+
       if (n.IsSelected) NewDataRow(t, n);
-      if (n.IsSubSelected) WalkDownSelected(((FolderNode)n).Children, t);
+
+      //IsSubSelected beautifully tells us exactly which Children to further inspect and ignore the rest for an efficient walk down
+      //and it "automatically" protects us to only traverse folders because files can have no children and therefore are never subselected
+      //TODO: technically speaking IsSubSelected should be on FolderNode only... but then i'd have to cast code like this... so hmmmm... vs just having a flag there never gets set for Files... which is actually handy
+      if (n.IsSubSelected) WalkDownSelected(((FolderNode)n).Children, t, IncludedFolders, ExcludedFiles);
     }
   }
 
-  static private int NewDataRow(DataTable t, FileSystemNode f)
+  static private void NewDataRow(DataTable t, FileSystemNode f)
   {
     DataRow r = t.NewRow();
-    //just hard code the mapping and don't waste cycles making it generic... we can always reuse this approach when mappings are so simple like this
+    //just hard code the mapping and don't waste cycles making it generic
     r["IsExcluded"] = f.IsExcluded;
     r["FullPath"] = f.FullPath;
     t.Rows.Add(r);
-    return (0); //just to make select happy... we're just using linq as a glorified foreach at this point... probably not any faster or better
   }
 
 }
@@ -200,7 +234,7 @@ public class FolderNode : FileSystemNode
 
       _Children = (from subdir in GetSubdirs(dir) select new FolderNode(this, subdir)).Union<FileSystemNode>( //nugget: this is pretty cool
                     (from file in GetFiles(dir) select new FileNode(this, file))
-                  ).ToDictionary((n) => n.FullPath, StringComparer.InvariantCultureIgnoreCase);
+                  ).ToDictionary((n) => n.FullPath, StringComparer.OrdinalIgnoreCase);
 
       return (_Children);
     }

@@ -18,14 +18,16 @@ if not exists(select 1 from sysobjects where name = 'BackupProfile_u')
 GO
 alter PROCEDURE [dbo].[BackupProfile_u]
 @BackupProfileID int,
-@Name varchar(50) = null,
+@Name varchar(50),
+@MediaSizeID INT,
 @Folders BackupProfileFolder_UDT readonly
 AS BEGIN
 	
 SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
 
 update BackupProfile set
-  Name = isnull(@Name, Name)
+  Name = @Name,
+  MediaSizeID = @MediaSizeID
 where BackupProfileID = @BackupProfileID
 
 if (@@RowCount = 0)
