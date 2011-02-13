@@ -9,7 +9,7 @@ using System.Data;
 
 using System.Collections.Specialized;
 
-using FileSystemNodes = System.Collections.Generic.Dictionary<string, FileSystemNode>; //nugget: type aliasing, very handy, basic inheritance isn't as clean
+using FileSystemNodes = System.Collections.Generic.Dictionary<string, FileSystemNode>; //nugget: type aliasing, very handy, basic inheritance isn'SelectedFolders as clean
 
 public class FileSystemNode : DependencyObject
 {
@@ -57,7 +57,7 @@ public class FileSystemNode : DependencyObject
 
   private void SetIsExcluded()
   {
-    IsExcluded = IsSelected && IsAncestorSelected && (!IsSubSelected /*this is redundant because filenodes can't be subselected: || this is FileNode*/); //NUGGET: 2011_02_11 12:56AM NAILED IT!!!! FUCK YEAH... this took me 4EVER
+    IsExcluded = IsSelected && IsAncestorSelected && (!IsSubSelected /*this is redundant because filenodes can'SelectedFolders be subselected: || this is FileNode*/); //NUGGET: 2011_02_11 12:56AM NAILED IT!!!! FUCK YEAH... this took me 4EVER
   }
 
   static private void RefreshIsSubSelected(FileSystemNode node)
@@ -98,7 +98,7 @@ public class FileSystemNode : DependencyObject
     FileSystemNodes currentnodelist = (parentnode == null) ? RootDirectories : IsFolder ? parentnode.Children : null /* <= this should never exist, i.e. trying to load a file without having an existing parent's child list to add it to, because the parents get created as we go down the tree */;
     string path = String.Join("\\", FullPath.Take(depthcounter) /*1 based index*/) + (IsFolder ? "\\" : "");
 
-    //if the current node doesn't show up in our tree...
+    //if the current node doesn'SelectedFolders show up in our tree...
     FileSystemNode node = null;
     if (!currentnodelist.TryGetValue(path, out node))
     {
@@ -139,7 +139,7 @@ public class FileSystemNode : DependencyObject
     IsMissing = true; //this constructor fires first when we chain them so the FileSystemInfo based constructor gets final say on this flag
   }
 
-  //static public List<FileSystemNode> FlatList = new List<FileSystemNode>(); //nugget: interestingly complex case... since another Static initializer (RootDirectories) fires code that uses this Static variable, you have to put this one first in the source, or else it won't be initialized yet when called upon
+  //static public List<FileSystemNode> FlatList = new List<FileSystemNode>(); //nugget: interestingly complex case... since another Static initializer (RootDirectories) fires code that uses this Static variable, you have to put this one first in the source, or else it won'SelectedFolders be initialized yet when called upon
 
   static public FileSystemNodes RootDirectories = 
     (from drive in DriveInfo.GetDrives() where drive.IsReady
@@ -149,24 +149,27 @@ public class FileSystemNode : DependencyObject
      } as FileSystemNode).ToDictionary((n) => n.FullPath, StringComparer.OrdinalIgnoreCase);
 
 
-  static public DataTable GetSelected(DataTable t, List<FolderNode> IncludedFolders = null, List<string> ExcludedFiles = null)
+  static public DataTable GetSelected(DataTable SelectedFolders, DataTable IncludedFiles = null)
   {
-    t.BeginLoadData(); //basically this disables constraints and that's what we want in this particular case
-    //(from node in FlatList where node.IsSelected select NewDataRow(t, node)).Last();  //this basically just saves us from looping twice, once to filter and once to convert to DataTable
-    //nugget: all the approaches out there in Google land are no more glamorous... e.g.: http://msdn.microsoft.com/en-us/library/bb669096.aspx
-    //t.EndLoadData(); //not even going to re-enable the constraints at the end
+    SelectedFolders.BeginLoadData(); //basically this disables constraints and that's what we want in this particular case
+    SelectedFolders.Clear();
 
-    WalkDownSelected(RootDirectories, t, IncludedFolders, ExcludedFiles);
+    if (IncludedFiles != null)
+    {
+      IncludedFiles.BeginLoadData();
+      IncludedFiles.Clear();
+    }
 
-    return t; //just makes the calling syntax a little more compact
+    WalkDownSelected(RootDirectories, SelectedFolders, IncludedFiles);
+
+    return (SelectedFolders); //just makes the calling context simpler if you're only going after gathering the selected folders and not the whole file set
   }
 
-  static private void WalkDownSelected(FileSystemNodes nodelist, DataTable t, List<FolderNode> IncludedFolders, List<string> ExcludedFiles)
+  static private void WalkDownSelected(FileSystemNodes nodelist, DataTable SelectedFolders, DataTable IncludedFiles)
   {
     foreach (FileSystemNode n in nodelist.Values)
     {
-
-      if (IncludedFolders != null)
+      if (IncludedFiles != null)
       {
         //good concepts to keep in mind when understanding the tree walk logic:
         //  folders are the only thing that form the hierarchy (i know, duh)
@@ -182,23 +185,37 @@ public class FileSystemNode : DependencyObject
         // for an IncludedFolder, IsSubSelected will tell us whether to subscan or just process the single folder => DirectoryInfo.GetDirectories(folder, IsSubSelected?SearchOption.None:SearchOption.AllDirectories)
         // excluded files are those children which are files and IsExcluded right???
 
-        if (n is FolderNode && (n.IsAncestorSelected || n.IsSelected) && !n.IsExcluded) IncludedFolders.Add(n as FolderNode);
-        else if (n is FileNode && n.IsExcluded) ExcludedFiles.Add((n as FileNode).FullPath);
+        if (n is FolderNode && (n.IsAncestorSelected || n.IsSelected) && !n.IsExcluded) ScanFolder(n as FolderNode, IncludedFiles);
+        else if (n is FileNode && n.IsExcluded) IncludedFiles.Rows.Remove(IncludedFiles.Rows.Find((n as FileNode).FullPath));
       }
 
-      if (n.IsSelected) NewDataRow(t, n);
+      if (n.IsSelected) NewSelectedFolderRow(SelectedFolders, n);
 
       //IsSubSelected beautifully tells us exactly which Children to further inspect and ignore the rest for an efficient walk down
       //and it "automatically" protects us to only traverse folders because files can have no children and therefore are never subselected
-      //TODO: technically speaking IsSubSelected should be on FolderNode only... but then i'd have to cast code like this... so hmmmm... vs just having a flag there never gets set for Files... which is actually handy
-      if (n.IsSubSelected) WalkDownSelected(((FolderNode)n).Children, t, IncludedFolders, ExcludedFiles);
+      //TODO: technically speaking IsSubSelected should be on FolderNode only... but then i'd have to cast code like this... so hmmmm... vs just having a flag there never gets set for IncludedFiles... which is actually handy
+      if (n.IsSubSelected) WalkDownSelected(((FolderNode)n).Children, SelectedFolders, IncludedFiles);
     }
   }
 
-  static private void NewDataRow(DataTable t, FileSystemNode f)
+  static private void ScanFolder(FolderNode folder, DataTable IncludedFiles)
+  {
+    DirectoryInfo dir = new DirectoryInfo(folder.FullPath);
+    FileInfo[] files = dir.GetFiles("*.*", folder.IsSubSelected ? SearchOption.TopDirectoryOnly : SearchOption.AllDirectories);
+    foreach (FileInfo file in files)
+    {
+      DataRow r = IncludedFiles.NewRow();
+      r["FullPath"] = file.FullName;
+      r["ModifiedDate"] = file.LastWriteTimeUtc;
+      r["Size"] = file.Length; //megabytes
+      IncludedFiles.Rows.Add(r);
+    }
+  }
+
+  static private void NewSelectedFolderRow(DataTable t, FileSystemNode f)
   {
     DataRow r = t.NewRow();
-    //just hard code the mapping and don't waste cycles making it generic
+    //just hard code the mapping and don'SelectedFolders waste cycles making it generic
     r["IsExcluded"] = f.IsExcluded;
     r["FullPath"] = f.FullPath;
     t.Rows.Add(r);

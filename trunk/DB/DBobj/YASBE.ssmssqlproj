@@ -43,6 +43,24 @@
           <AssociatedConnUserName />
           <FullPath>BackupProfiles_s.sql</FullPath>
         </FileNode>
+        <FileNode Name="File_UDT.sql">
+          <AssociatedConnectionMoniker>8c91a03d-f9b4-46c0-a305-b5dcc79ff907:BEEJQUAD\DEV2008:True</AssociatedConnectionMoniker>
+          <AssociatedConnSrvName>BEEJQUAD\DEV2008</AssociatedConnSrvName>
+          <AssociatedConnUserName />
+          <FullPath>File_UDT.sql</FullPath>
+        </FileNode>
+        <FileNode Name="Files_UploadCompare.sql">
+          <AssociatedConnectionMoniker>8c91a03d-f9b4-46c0-a305-b5dcc79ff907:BEEJQUAD\DEV2008:True</AssociatedConnectionMoniker>
+          <AssociatedConnSrvName>BEEJQUAD\DEV2008</AssociatedConnSrvName>
+          <AssociatedConnUserName />
+          <FullPath>Files_UploadCompare.sql</FullPath>
+        </FileNode>
+        <FileNode Name="Incremental_i.sql">
+          <AssociatedConnectionMoniker>8c91a03d-f9b4-46c0-a305-b5dcc79ff907:BEEJQUAD\DEV2008:True</AssociatedConnectionMoniker>
+          <AssociatedConnSrvName>BEEJQUAD\DEV2008</AssociatedConnSrvName>
+          <AssociatedConnUserName />
+          <FullPath>Incremental_i.sql</FullPath>
+        </FileNode>
       </Items>
     </LogicalFolder>
     <LogicalFolder Name="Miscellaneous" Type="3" Sorted="true">

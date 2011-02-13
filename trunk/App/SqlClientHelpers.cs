@@ -41,12 +41,12 @@ public class Proc : IDisposable
   /// <param name="ProcName"></param>
   /// <param name="UserName">pass this in to set "Workstation ID" which can be obtained via T-SQL's HOST_NAME() function... as a handy layup for a simple table audit framework :)</param>
   // I'm not entirely convinced this is the most elegant way to support this versus something more "automatic" in the background
-  // the main challenge is maintaining a generically reusable Proc class that doesn't know whether it's running under ASP.Net or WPF
+  // the main challenge is maintaining a generically reusable Proc class that doesn'SelectedFolders know whether it's running under ASP.Net or WPF
   // so rather than implementing a bunch of dynamic "drilling" to identify where you are and who the current username is
   // i'm thinking this is a nice "good enough" for now to simply pass it in from the outercontext
   public Proc(string ProcName, string UserName)
   {
-    if (System.ComponentModel.LicenseManager.UsageMode == System.ComponentModel.LicenseUsageMode.Designtime) return; //this doesn't seem to work??
+    if (System.ComponentModel.LicenseManager.UsageMode == System.ComponentModel.LicenseUsageMode.Designtime) return; //this doesn'SelectedFolders seem to work??
     if (System.Diagnostics.Process.GetCurrentProcess().ProcessName == "devenv") return;
 
     Assert.Check(ConnectionString != null, "'Proc.ConnectionString' must be assigned prior to creating Proc instances, System.ComponentModel.LicenseManager.UsageMode: " + System.ComponentModel.LicenseManager.UsageMode.ToString() + ", System.Diagnostics.Process.GetCurrentProcess().ProcessName: " + System.Diagnostics.Process.GetCurrentProcess().ProcessName);

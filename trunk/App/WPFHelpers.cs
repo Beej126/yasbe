@@ -30,13 +30,14 @@ public static class WPFHelpers
       if (c.ElementStyle.IsSealed) c.ElementStyle = new Style(c.ElementStyle.TargetType, c.ElementStyle.BasedOn);
       c.ElementStyle.Setters.Add(new Setter(TextBlock.TextAlignmentProperty, TextAlignment.Right));
       c.ElementStyle.Seal();
+      c.Binding.StringFormat = "{0:#,#}";
     }
   }
 
 
   public static Brush BeginBrushColorAnimation(this Brush brush, Color color, int seconds = 1)
   {
-    Brush br = (brush == null)? new SolidColorBrush() : brush.Clone(); //otherwise the default brush is "frozen" and can't be animated
+    Brush br = (brush == null)? new SolidColorBrush() : brush.Clone(); //otherwise the default brush is "frozen" and can'SelectedFolders be animated
     br.BeginAnimation(SolidColorBrush.ColorProperty, new ColorAnimation(color, TimeSpan.FromSeconds(seconds)) { AutoReverse = true, RepeatBehavior = RepeatBehavior.Forever });
     return (br);
   }
@@ -85,7 +86,7 @@ public static class WPFHelpers
   //nugget: DoEvents() WPF equivalent: http://kentb.blogspot.com/2008/04/dispatcher-frames.html
   public static void DoEvents()
   {
-    //Invoke won't return until all higher priority messages have been pumped from the queue
+    //Invoke won'SelectedFolders return until all higher priority messages have been pumped from the queue
     //DispatcherPriority.Background is lower than DispatcherPriority.Input
     //http://msdn.microsoft.com/en-us/library/system.windows.threading.dispatcherpriority.aspx
     Dispatcher.CurrentDispatcher.Invoke(DispatcherPriority.Background, new VoidHandler(() => { }));
@@ -225,9 +226,9 @@ public class WaitCursorWrapper : IDisposable
     //nugget: Application.Current.Dispatcher.CheckAccess() confirms whether the current thread is the UI thread before attempting to hit objects tied to the UI thread, like Application.Current.MainWindow
     //in the iTRAAC v2 application, this conflict happens when we use a BackgroundWorker to execute certain datalayer stuff off the UI thread, leaving the UI responsive for more input during the data access, yet we've but we've enabled the datalayer methods to hit this WaitCursor logic via a callback
     //no loss though, because the BackgroundWorkerEx class implements WaitCursor toggling on its own anyway
-    //nugget: crazy, Dispatcher.CheckAccess() is hidden from intellisense on purpose!?!: http://arstechnica.com/phpbb/viewtopic.php?f=20&t=103740
+    //nugget: crazy, Dispatcher.CheckAccess() is hidden from intellisense on purpose!?!: http://arstechnica.com/phpbb/viewtopic.php?f=20&SelectedFolders=103740
     //if (Application.Current.Dispatcher.CheckAccess() 
-    //  && Application.Current.MainWindow != null) //for the edge case where we're hitting the database right on App.OnStartup and App.MainWindow hasn't been populated yet ) 
+    //  && Application.Current.MainWindow != null) //for the edge case where we're hitting the database right on App.OnStartup and App.MainWindow hasn'SelectedFolders been populated yet ) 
     //{
     //  oldCursor = Application.Current.MainWindow.Cursor;
     //  Application.Current.MainWindow.Cursor = Cursors.AppStarting;

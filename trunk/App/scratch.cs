@@ -1,5 +1,5 @@
 ﻿/*
-<Button Content="2. All Files" Click="AllFiles_Click" Visibility="Collapsed" />
+<Button Content="2. All IncludedFiles" Click="AllFiles_Click" Visibility="Collapsed" />
 <Button Content="3. Minus Excluded" Click="Exclude_Click" Visibility="Collapsed" />
 
     List<FolderNode> IncludedFolders = new List<FolderNode>();
@@ -8,7 +8,7 @@
     {
       IncludedFolders.Clear();
       ExcludedFiles.Clear();
-      DataTable t = FileSystemNode.GetSelected(MainWindow.GetBlankBackupProfileTable(), IncludedFolders, ExcludedFiles);
+      DataTable SelectedFolders = FileSystemNode.GetSelected(MainWindow.GetBlankBackupProfileTable(), IncludedFolders, ExcludedFiles);
 
       gridFilesWorkingSet.ItemsSource = null;
       datagrid2.ItemsSource = null;

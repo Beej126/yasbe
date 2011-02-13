@@ -8,7 +8,7 @@
 exec [Incremental_i] @BackupProfileID=2
 
 DELETE Incremental
-DBCC CHECKIDENT (Incremental, RESEED, 1)
+DBCC CHECKIDENT (Incremental, RESEED, 0)
 */
 
 use YASBE
