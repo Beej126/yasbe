@@ -50,24 +50,15 @@ namespace YASBE
       BackupFile.List.CollectionChanged += (s, a) => { if (a.NewItems != null) gridFilesWorkingSet.ScrollIntoView(a.NewItems[0]); }; //autoscroll the grid attached to this list
     }
 
-    void gridFilesWorkingSet_AutoGeneratingColumn(object sender, DataGridAutoGeneratingColumnEventArgs e)
-    {
-      DataGridTextColumn c = (e.Column as DataGridTextColumn);
-      if (e.PropertyName == "Size")
-      {
-        c.Binding.StringFormat = "{0:#,#.00}";
-        c.Header = "Size (MegaBytes)";
-      }
-    }
-
-    //public DataTable BackupProfiles { get; private set; }
-
-    static private DataTable _BlankBackupProfileFolderTable = null;
-
-    static public DataTable GetBlankBackupProfileTable()
-    {
-      return (_BlankBackupProfileFolderTable.Clone());
-    }
+    //void gridFilesWorkingSet_AutoGeneratingColumn(object sender, DataGridAutoGeneratingColumnEventArgs e)
+    //{
+    //  DataGridTextColumn c = (e.Column as DataGridTextColumn);
+    //  if (e.PropertyName == "Size")
+    //  {
+    //    c.Binding.StringFormat = "{0:#,#.000}";
+    //    c.Header = "Size (MegaBytes)";
+    //  }
+    //}
 
     private bool _beenhere = false;
     void MainWindow_Loaded(object sender, RoutedEventArgs e)
@@ -101,7 +92,11 @@ namespace YASBE
         cbxMediaSize.ItemsSource = BackupProfiles_s.dataSet.Tables[2].DefaultView; //i belive this order is what allowed the cbxBackupProfiles Selected row to properly drive the selected cbxMediaSize.MediaSizeID
         cbxBackupProfiles.ItemsSource = BackupProfiles_s.Tables[0].DefaultView; 
         gridIncrementalHistory.ItemsSource = BackupProfiles_s.Tables[1].DefaultView;
-        _BlankBackupProfileFolderTable = BackupProfiles_s.Tables[3];
+        
+        SelectedFolders = BackupProfiles_s.Tables[3];
+
+        IncludedFiles = BackupProfiles_s.Tables[4];
+        IncludedFiles.PrimaryKey = new DataColumn[] { IncludedFiles.Columns["FullPath"] };
       }
     }
 
@@ -185,7 +180,7 @@ namespace YASBE
         BackupProfile_u["@BackupProfileID"] = cbxBackupProfiles.SelectedValue;
         BackupProfile_u["@Name"] = ((DataRowView)cbxBackupProfiles.SelectedItem)["Name"];
         BackupProfile_u["@MediaSizeID"] = ((DataRowView)cbxBackupProfiles.SelectedItem)["MediaSizeID"];
-        BackupProfile_u["@Folders"] = FileSystemNode.GetSelected(MainWindow.GetBlankBackupProfileTable());
+        BackupProfile_u["@Folders"] = FileSystemNode.GetSelected(SelectedFolders);
         BackupProfile_u.ExecuteNonQuery();
       }
 
@@ -200,25 +195,12 @@ namespace YASBE
       }
     }
 
+    public DataTable IncludedFiles = null;
+    public DataTable SelectedFolders = null;
     private void GatherCandidates_Click(object sender, RoutedEventArgs e)
     {
-      List<FolderNode> IncludedFolders = new List<FolderNode>();
-      List<string> ExcludedFiles = new List<string>();
-      DataTable t = FileSystemNode.GetSelected(MainWindow.GetBlankBackupProfileTable(), IncludedFolders, ExcludedFiles);
-      gridFilesWorkingSet.ItemsSource = IncludedFolders;
-      return;
-
-      List<FileInfo> AllFiles = new List<FileInfo>();
-      foreach (FolderNode folder in IncludedFolders)
-      {
-        DirectoryInfo dir = new DirectoryInfo(folder.FullPath);
-        FileInfo[] files = dir.GetFiles("*.*", folder.IsSubSelected ? SearchOption.TopDirectoryOnly : SearchOption.AllDirectories);
-        AllFiles.AddRange(files);
-      }
-
-      Dictionary<string, FileInfo> FinalList = new Dictionary<string, FileInfo>(StringComparer.OrdinalIgnoreCase);
-      FinalList = AllFiles.ToDictionary(fi => fi.FullName);
-      foreach (string excludefile in ExcludedFiles) FinalList.Remove(excludefile);
+      FileSystemNode.GetSelected(SelectedFolders, IncludedFiles);
+      gridFilesWorkingSet.ItemsSource = IncludedFiles.DefaultView;
     }
 
     private void CopyToExclusions_Executed(object sender, ExecutedRoutedEventArgs e)
@@ -241,11 +223,31 @@ namespace YASBE
       ActiveIncrementalRow = ((DataRowView)gridIncrementalHistory.SelectedItem).Row;
     }
 
+    private void ShowSelectedFolders_Click(object sender, RoutedEventArgs e)
+    {
+      gridFilesWorkingSet.ItemsSource = SelectedFolders.DefaultView;
+    }
+
+    private void ShowIncludedFiles_Click(object sender, RoutedEventArgs e)
+    {
+      gridFilesWorkingSet.ItemsSource = IncludedFiles.DefaultView;    
+    }
+
+    private void ComputeIncremental_Click(object sender, RoutedEventArgs e)
+    {
+      using (Proc Files_UploadCompare = new Proc("Files_UploadCompare"))
+      {
+        Files_UploadCompare["@BackupProfileID"] = cbxBackupProfiles.SelectedValue;
+        Files_UploadCompare["@Files"] = IncludedFiles; 
+        gridFilesWorkingSet.ItemsSource = Files_UploadCompare.ExecuteDataTable().DefaultView;
+      }
+    }
+
   }
 
   public class FileTreeBackgroundBrushConverter : WPFValueConverters.MarkupExtensionConverter, IMultiValueConverter
   {
-    public FileTreeBackgroundBrushConverter() { } //to avoid an annoying warning from XAML designer: "No constructor for type 'xyz' has 0 parameters."  Somehow the inherited one doesn't do the trick!?!  I guess it's a reflection bug.
+    public FileTreeBackgroundBrushConverter() { } //to avoid an annoying warning from XAML designer: "No constructor for type 'xyz' has 0 parameters."  Somehow the inherited one doesn'SelectedFolders do the trick!?!  I guess it's a reflection bug.
 
     public object Convert(object[] values, Type targetType, object parameter, System.Globalization.CultureInfo culture)
     {

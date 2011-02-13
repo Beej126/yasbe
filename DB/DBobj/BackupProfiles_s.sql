@@ -20,24 +20,22 @@ if not exists(select 1 from sysobjects where name = 'BackupProfiles_s')
 	exec('create PROCEDURE BackupProfiles_s as select 1 as one')
 GO
 alter PROCEDURE [dbo].[BackupProfiles_s]
-@BackupProfileID INT,
-@MediaSize DECIMAL(9,2) = NULL OUT
+@BackupProfileID INT
 AS BEGIN
 	
 SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
 
-SELECT
-	BackupProfileID,
-	Name
-FROM BackupProfile
+SELECT * FROM BackupProfile
 
 SELECT * FROM Incremental ORDER BY IncrementalID DESC
 
 SELECT * FROM MediaSize ORDER BY MediaSizeID
-SELECT @MediaSize = MediaSizeID FROM BackupProfile
 
-DECLARE @udt BackupProfileFolder_UDT
-SELECT * FROM @udt
+DECLARE @Folders BackupProfileFolder_UDT
+SELECT * FROM @Folders
+
+DECLARE @Files File_UDT
+SELECT * FROM @Files
 
 END
 GO

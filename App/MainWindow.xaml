@@ -108,8 +108,6 @@
                 <Setter Property="Margin" Value="3 3 0 0" />
               </Style>
             </WrapPanel.Resources>
-            <Button Content="Get All Current Files" Click="GatherCandidates_Click" />
-            <Button Click="GatherCandidates_Click" Content="Compare to Previous (incremental)" />
             <Button Content="Stamp Current Batch as 'Archived'" />
           </WrapPanel>
           
@@ -147,20 +145,6 @@
 
         </StackPanel>
 
-        <StackPanel Orientation="Horizontal" >
-          <Button Content="New Incremental Backup" Click="NewIncremental_Click" />
-          <Label Content="Active Incremental #:" FontSize="14" FontWeight="Bold" />
-          <TextBlock DataContext="{Binding Mode=OneWay, Path=ActiveIncrementalRow}" 
-                     Visibility="{Binding Mode=OneWay, Converter={conv:NotNullToVisibleConverter}}"> <!-- blank path passes DataContext object to converter -->
-            <TextBlock.Text>
-              <MultiBinding StringFormat="{}{0} - {1:MMM dd, yyyy}" >
-                <Binding Mode="OneWay" Path="[IncrementalID]" />
-                <Binding Mode="OneWay" Path="[BackupDate]" />
-              </MultiBinding>
-            </TextBlock.Text>
-          </TextBlock>
-        </StackPanel>
-
         <StackPanel Orientation="Horizontal" Margin="0 10 0 0">
           <TextBlock Text="Windows Burn Staging Folder:"  />
           <ComboBox Name="cbxDrives" ItemsSource="{Binding Mode=OneTime, Source={x:Static local:MainWindow.WindowsBurnStagingFolders}}" SelectedIndex="0" />
@@ -187,31 +171,86 @@
       </Grid.RowDefinitions>
       
       <GroupBox Header="Incremental Backup History"  >
-        <DataGrid Name="gridIncrementalHistory" AutoGenerateColumns="True" MaxHeight="100" IsReadOnly="True" HeadersVisibility="Column">
-          <DataGrid.ContextMenu>
-            <ContextMenu>
-              <MenuItem Header="Make Active" Click="MakeActiveIncremental_Click" />
-            </ContextMenu>
-          </DataGrid.ContextMenu>
-        </DataGrid>
+        <DockPanel>
+          <DockPanel.Resources>
+            <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+              <Setter Property="Margin" Value="3 3 0 0" />
+            </Style>
+          </DockPanel.Resources>
+          <WrapPanel DockPanel.Dock="Top" Background="LightSteelBlue">
+            <Button Content="New Incremental Backup" Click="NewIncremental_Click" />
+            <Label Content="Active Incremental #:" FontSize="14" FontWeight="Bold" />
+            <TextBlock DataContext="{Binding Mode=OneWay, Path=ActiveIncrementalRow}" 
+                     Visibility="{Binding Mode=OneWay, Converter={conv:NotNullToVisibleConverter}}"> <!-- blank path passes DataContext object to converter -->
+            <TextBlock.Text>
+              <MultiBinding StringFormat="{}{0} - {1:MMM dd, yyyy}" >
+                <Binding Mode="OneWay" Path="[IncrementalID]" />
+                <Binding Mode="OneWay" Path="[BackupDate]" />
+              </MultiBinding>
+            </TextBlock.Text>
+            </TextBlock>
+          </WrapPanel>
+
+          <DataGrid Name="gridIncrementalHistory" AutoGenerateColumns="True" MaxHeight="100" IsReadOnly="True" HeadersVisibility="Column">
+            <DataGrid.ContextMenu>
+              <ContextMenu>
+                <MenuItem Header="Make Active" Click="MakeActiveIncremental_Click" />
+              </ContextMenu>
+            </DataGrid.ContextMenu>
+
+          </DataGrid>
+        </DockPanel>
       </GroupBox>
       
       <GroupBox Header="Current Backup Files Working Set" Grid.Row="1" >
-        <DataGrid Name="gridFilesWorkingSet" IsReadOnly="True" HeadersVisibility="Column"
-                  AutoGenerateColumns="True" AutoGeneratingColumn="gridFilesWorkingSet_AutoGeneratingColumn" 
-                  ItemsSource="{Binding Mode=OneWay, Source={x:Static local:BackupFile.List}}">
-          <DataGrid.Resources>
-            <Style TargetType="{x:Type TextBlock}">
-              <Setter Property="TextAlignment" Value="Right" />
-              <Setter Property="Foreground" Value="Red" />
-            </Style>
+        <Grid>
+          <Grid.RowDefinitions>
+            <RowDefinition Height="auto" />
+            <RowDefinition Height="auto" />
+            <RowDefinition Height="*" />
+          </Grid.RowDefinitions>
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+          </Grid.ColumnDefinitions>
 
-            <Style x:Key="RightAlignStyling" TargetType="{x:Type TextBlock}">
-              <Setter Property="TextAlignment" Value="Right" />
-            </Style>
+          <WrapPanel DockPanel.Dock="Top" Background="LightSteelBlue" Grid.ColumnSpan="2">
+            <Button Content="Get All Current Files" Click="GatherCandidates_Click" />
+            <Button Content="Show Folders" Click="ShowSelectedFolders_Click" />
+            <Button Content="Show Files" Click="ShowIncludedFiles_Click" />
+            <Button Content="Compute Incremental" Margin="20 3 0 0" Click="ComputeIncremental_Click" />
+          </WrapPanel>
+          
+          <WrapPanel DockPanel.Dock="Top" Background="LightSteelBlue" Grid.Row="1" >
+            <Label Content="Discs Required: " />
+            <Label Name="lblDiscsRequired" FontWeight="Bold" />
+            <Label Content="Current Disc: "  />
+            <Label Name="lblCurrentDisc" FontWeight="Bold" />
+            <Button Content="Mark Current Disc Complete" Margin="10 3 0 3" />
+          </WrapPanel>
+
+          <Border Background="LightSteelBlue" Grid.Row="1" Grid.Column="1" BorderThickness="0" >
+            <TextBlock VerticalAlignment="Bottom" Margin="5 0 3 0"
+                       Text="{Binding Mode=OneWay, ElementName=gridFilesWorkingSet, Path=Items.Count, StringFormat='{}{0:#,#,#} items'}" />
+          </Border>
+
+          <DataGrid Grid.Row="2" Grid.ColumnSpan="2"
+                    Name="gridFilesWorkingSet" IsReadOnly="True" HeadersVisibility="Column"
+                    AutoGenerateColumns="True" 
+                    ItemsSource="{Binding Mode=OneWay, Source={x:Static local:BackupFile.List}}">
+            <DataGrid.Resources>
+              <Style TargetType="{x:Type TextBlock}">
+                <Setter Property="TextAlignment" Value="Right" />
+                <Setter Property="Foreground" Value="Red" />
+              </Style>
+
+              <Style x:Key="RightAlignStyling" TargetType="{x:Type TextBlock}">
+                <Setter Property="TextAlignment" Value="Right" />
+              </Style>
             
-          </DataGrid.Resources>
-        </DataGrid>
+            </DataGrid.Resources>
+          </DataGrid>
+        </Grid>
       </GroupBox>
     </Grid>
 
