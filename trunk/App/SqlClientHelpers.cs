@@ -26,6 +26,8 @@ public class Proc : IDisposable
   private class DummyDisposable : IDisposable { public void Dispose() { } };
   #endregion
 
+  public bool EnforceConstraints = true;
+
   static public string ConnectionString = null;
   public bool TrimAndNull = true;
   private SqlCommand _cmd = null;
@@ -170,10 +172,12 @@ public class Proc : IDisposable
     using (SqlDataAdapter da = new SqlDataAdapter(_cmd))
     {
       if (_ds == null) _ds = new DataSet();
+      _ds.EnforceConstraints = EnforceConstraints;
       if (_cmd.Connection.State != ConnectionState.Open) _cmd.Connection.Open();
       da.MissingSchemaAction = MissingSchemaAction.AddWithKey; //this magical line tells ADO.Net to go to the trouble of bringing back the schema info like DataColumn.MaxLength (which would otherwise always be -1!!)
       //da.FillSchema(_ds, SchemaType.Source);
       da.Fill(_ds);
+      _ds.EnforceConstraints = true;
       foreach (DataTable table in _ds.Tables) foreach (DataColumn column in table.Columns) column.ReadOnly = false;
       return (_ds);
     }
@@ -195,7 +199,7 @@ public class Proc : IDisposable
         return (null);
       //otherwise rethrow so that we can see the bug that caused the exception and fix it
       else 
-        throw (ex);
+        throw;
     }
   }
 
@@ -251,7 +255,7 @@ public class Proc : IDisposable
     catch (Exception ex)
     {
       if (!ReflectionHelpers.PropertySetter(label, "Text", SqlClientHelpers.SqlErrorTextCleaner(ex.Message)))
-        throw (ex);
+        throw;
       return (false);
     }
   }

@@ -15,6 +15,7 @@ namespace YASBE
 
       System.Diagnostics.Process.Start("net.exe", "start MSSQL$DEV2008");
 
+      Proc.NewWaitObject = new Proc.WaitObjectConstructor(WaitCursorWrapper.WaitCursorWrapperFactory);
       Proc.ConnectionString = @"Data Source=.\dev2008;User ID=sa;Password=annoying;Initial Catalog=YASBE;";
 
       //the App.DispatcherUnhandledException is the preferrable catcher because you can "Handle" it and prevent the app from crashing

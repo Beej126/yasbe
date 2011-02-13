@@ -28,15 +28,7 @@ namespace YASBE
 {
   public partial class MainWindow : Window
   {
-    public DataRow ActiveIncrementalRow
-    {
-      get { return (DataRow)GetValue(ActiveIncrementalRowProperty); }
-      set { SetValue(ActiveIncrementalRowProperty, value); }
-    }
 
-    // Using a DependencyProperty as the backing store for ActiveIncrementalRow.  This enables animation, styling, binding, etc...
-    public static readonly DependencyProperty ActiveIncrementalRowProperty =
-        DependencyProperty.Register("ActiveIncrementalRow", typeof(DataRow), typeof(MainWindow), new UIPropertyMetadata(null));
    
     public MainWindow()
     {
@@ -89,14 +81,15 @@ namespace YASBE
         BackupProfiles_s["@BackupProfileID"] = YASBE.Properties.Settings.Default.SelectedBackupProfileID;
 
         BackupProfiles_s.ExecuteDataSet();
-        cbxMediaSize.ItemsSource = BackupProfiles_s.dataSet.Tables[2].DefaultView; //i belive this order is what allowed the cbxBackupProfiles Selected row to properly drive the selected cbxMediaSize.MediaSizeID
+        cbxMediaSize.ItemsSource = BackupProfiles_s.dataSet.Tables[1].DefaultView; //i belive this order is what allowed the cbxBackupProfiles Selected row to properly drive the selected cbxMediaSize.MediaSizeID
         cbxBackupProfiles.ItemsSource = BackupProfiles_s.Tables[0].DefaultView; 
-        gridIncrementalHistory.ItemsSource = BackupProfiles_s.Tables[1].DefaultView;
         
-        SelectedFolders = BackupProfiles_s.Tables[3];
+        SelectedFolders = BackupProfiles_s.Tables[2];
 
-        IncludedFiles = BackupProfiles_s.Tables[4];
+        IncludedFiles = BackupProfiles_s.Tables[3];
         IncludedFiles.PrimaryKey = new DataColumn[] { IncludedFiles.Columns["FullPath"] };
+
+        RefreshIncrementalInfo(true);
       }
     }
 
@@ -199,8 +192,11 @@ namespace YASBE
     public DataTable SelectedFolders = null;
     private void GatherCandidates_Click(object sender, RoutedEventArgs e)
     {
-      FileSystemNode.GetSelected(SelectedFolders, IncludedFiles);
-      gridFilesWorkingSet.ItemsSource = IncludedFiles.DefaultView;
+      using (WaitCursorWrapper w = new WaitCursorWrapper())
+      {
+        FileSystemNode.GetSelected(SelectedFolders, IncludedFiles);
+        gridFilesWorkingSet.ItemsSource = IncludedFiles.DefaultView;
+      }
     }
 
     private void CopyToExclusions_Executed(object sender, ExecutedRoutedEventArgs e)
@@ -214,13 +210,77 @@ namespace YASBE
       {
         Incremental_i["@BackupProfileID"] = cbxBackupProfiles.SelectedValue;
         gridIncrementalHistory.ItemsSource = Incremental_i.ExecuteDataTable().DefaultView;
-        ActiveIncrementalRow = Incremental_i.Table0.Rows.Find(Incremental_i["@IncrementalID"]);
+        RefreshIncrementalInfo(true, Convert.ToInt32(Incremental_i["@IncrementalID"])); //we need a full load of the Incremental header info plus the files
       }
     }
 
     private void MakeActiveIncremental_Click(object sender, RoutedEventArgs e)
     {
       ActiveIncrementalRow = ((DataRowView)gridIncrementalHistory.SelectedItem).Row;
+      RefreshIncrementalInfo();//we just need a files list load here
+    }
+
+    public DataRow ActiveIncrementalRow
+    {
+      get { return (DataRow)GetValue(ActiveIncrementalRowProperty); }
+      set { SetValue(ActiveIncrementalRowProperty, value); }
+    }
+    public static readonly DependencyProperty ActiveIncrementalRowProperty =
+        DependencyProperty.Register("ActiveIncrementalRow", typeof(DataRow), typeof(MainWindow), new UIPropertyMetadata(null));
+
+    public int? ActiveIncrementalID
+    {
+      get
+      {
+        return ((ActiveIncrementalRow != null) ? Convert.ToInt16(ActiveIncrementalRow["IncrementalID"]) : (int?)null);
+      }
+    }
+
+    public int? CurrentMediaSubsetNumber
+    {
+      get
+      {
+        return ((ActiveIncrementalRow != null) ? Convert.ToInt16(ActiveIncrementalRow["MaxMediaSubsetNumber"]) : (int?)null);
+      }
+    }
+
+
+    /// <summary>
+    /// </summary>
+    /// <param name="NewIncrementalID">Just pass null if you're not trying to change the ActiveIncrementalID</param>
+    private void RefreshIncrementalInfo(bool FullDetail = false, int? NewIncrementalID = null)
+    {
+      DataView IncrementalView = ((DataView)gridIncrementalHistory.ItemsSource);
+      DataTable IncrementalTable = (IncrementalView == null) ? null : IncrementalView.Table;
+
+      if (NewIncrementalID != null && NewIncrementalID != ActiveIncrementalID)
+        ActiveIncrementalRow = IncrementalTable.Rows.Find(NewIncrementalID);
+
+      using (Proc Incremental_Proc = new Proc(FullDetail?"Incremental_FullDetail":"Incremental_Files"))
+      {
+        //nugget: "Failed to enable constraints" errors are brutal... here's some tips... look at the DataTable.GetErrors()..Row.RowError's to see what's barking
+        //as usual, it's pretty obvious when you figure it out... i was returning a resultset that didn't have a unique column selected to provide the primary key for the logical resultset
+        if (FullDetail) Incremental_Proc["@BackupProfileID"] = cbxBackupProfiles.SelectedValue;
+        Incremental_Proc["@IncrementalID"] = ActiveIncrementalID;
+        Incremental_Proc.ExecuteDataTable();
+
+        gridFilesWorkingSet.ItemsSource = Incremental_Proc.Tables[0].DefaultView; //whichever proc we fire, we get the files back in Table[0]
+
+        if (FullDetail)
+        {
+          //if we're just firing up and this is our base list of incrementals then assign it directly to the grid
+          if (IncrementalTable == null)
+          {
+            gridIncrementalHistory.ItemsSource = Incremental_Proc.Tables[1].DefaultView;
+            ActiveIncrementalRow = Incremental_Proc.Tables[1].Rows[0];
+          }
+          //otherwise merge this info into the grid as an update
+          else
+          {
+            IncrementalTable.Merge(Incremental_Proc.Tables[1], false); //TODO: check that the primary keys come through and line this up to work properly
+          }
+        }
+      }
     }
 
     private void ShowSelectedFolders_Click(object sender, RoutedEventArgs e)
@@ -235,11 +295,78 @@ namespace YASBE
 
     private void ComputeIncremental_Click(object sender, RoutedEventArgs e)
     {
-      using (Proc Files_UploadCompare = new Proc("Files_UploadCompare"))
+      if (ActiveIncrementalID == null)
       {
-        Files_UploadCompare["@BackupProfileID"] = cbxBackupProfiles.SelectedValue;
-        Files_UploadCompare["@Files"] = IncludedFiles; 
-        gridFilesWorkingSet.ItemsSource = Files_UploadCompare.ExecuteDataTable().DefaultView;
+        MessageBox.Show("Press [New Incremental Backup] button -OR-\r\nRight mouse the Incremental Backup History grid\r\nto establish the container for these new files",
+          "No Incremental Backup Container has been established", MessageBoxButton.OK, MessageBoxImage.Information);
+        return;
+      }
+
+      try
+      {
+        using (Proc Files_UploadCompare = new Proc("Files_UploadCompare"))
+        {
+          Files_UploadCompare["@IncrementalID"] = ActiveIncrementalID;
+          Files_UploadCompare["@Files"] = IncludedFiles;
+          Files_UploadCompare.ExecuteNonQuery();
+        }
+        RefreshIncrementalInfo(true); //the disc count into will change so we need a header level refresh
+      }
+      catch (Exception ex)
+      {
+        if (ex.Message.Left(9) == "[CONFIRM]")
+        {
+          MessageBox.Show(ex.Message, "** Warning **", MessageBoxButton.OK, MessageBoxImage.Exclamation);
+          chkOverrideExistingMediaSubsets.Visibility = Visibility.Visible;
+        }
+        else throw;
+      }
+    }
+
+    private void MediaSubsetCommit_Click(object sender, RoutedEventArgs e)
+    {
+      using (Proc MediaSubset_Commit = new Proc("MediaSubset_Commit"))
+      {
+        MediaSubset_Commit["@IncrementalID"] = ActiveIncrementalID;
+        MediaSubset_Commit.ExecuteNonQuery();
+        RefreshIncrementalInfo(true); 
+        HideCompletedMediaSubsets_Click(null, null); //TODO: see if this is necessary
+      }
+    }
+
+    private void HideCompletedMediaSubsets_Click(object sender, RoutedEventArgs e)
+    {
+      HideCompletedMediaSubsets();
+    }
+
+    private DataView HideCompletedMediaSubsets()
+    {
+      DataView v = (DataView)gridFilesWorkingSet.ItemsSource;
+      if (v == null || !v.Table.Columns.Contains("Finalized")) return (null);
+      v.RowFilter = (chkHideCompleteMediaSubsets.IsChecked.Value ? "Finalized = 0" : "");
+      return (v);
+    }
+
+    private void IdentifyNextMediaSubset_Click(object sender, RoutedEventArgs e)
+    {
+      using (WaitCursorWrapper w = new WaitCursorWrapper())
+      {
+        chkHideCompleteMediaSubsets.IsChecked = true;
+        DataView files = HideCompletedMediaSubsets();
+        files.Sort = "FullPath desc, Size desc";
+
+        long maxbytes = 500 * 1024 * 1024;
+
+        long tallybytes = 0;
+        for (int i = 0; i < files.Count; i++)
+        {
+          DataGridRow gridrow = WPFHelpers.GetDataGridRow(gridFilesWorkingSet, i);
+          long nextsize = Convert.ToInt64(files[i]["Size"]);
+          if (tallybytes + nextsize > maxbytes) break;
+
+          gridrow.IsSelected = true;
+          tallybytes += nextsize;
+        }
       }
     }
 

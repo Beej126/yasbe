@@ -16,58 +16,6 @@
     <CommandBinding Command="{x:Static local:RoutedCommands.CopyToExclusions}" Executed="CopyToExclusions_Executed" />
   </Window.CommandBindings>
 
-
-  <Window.Resources>
-    <Style x:Key="ReadOnlyTextBox" TargetType="{x:Type TextBox}" >
-      <Setter Property="Background" Value="#eeeeee"/>
-      <Setter Property="IsTabStop" Value="False"/>
-      <Setter Property="IsReadOnly" Value="True" />
-      <Setter Property="VerticalAlignment" Value="Center"/>
-    </Style>
-
-    <Style x:Key="BaseTextBlockStyle" TargetType="TextBlock">
-      <Setter Property="VerticalAlignment" Value="Center" />
-      <Setter Property="Margin" Value="0 0 5 0" />
-    </Style>
-
-    <Style x:Key="BigButtonText" TargetType="TextBlock" BasedOn="{StaticResource BaseTextBlockStyle}">
-      <Setter Property="FontSize" Value="24" />
-    </Style>
-    
-    <Style TargetType="ComboBox">
-      <Setter Property="Margin" Value="0 0 5 0" />
-      <Setter Property="Padding" Value="7" />
-      <Setter Property="VerticalAlignment" Value="Center" />
-    </Style>
-    
-    <Style TargetType="Button">
-      <Setter Property="Margin" Value="0 0 5 0" />
-      <Setter Property="Padding" Value="5" />
-      <Setter Property="VerticalAlignment" Value="Center" />
-    </Style>
-
-    <Style TargetType="Image">
-      <Setter Property="Height" Value="40" />
-    </Style>
-
-    <Style TargetType="TextBlock" BasedOn="{StaticResource BaseTextBlockStyle}" />
-
-    <Style TargetType="Label">
-      <Setter Property="VerticalAlignment" Value="Center" />
-    </Style>
-
-    <Style TargetType="GroupBox">
-      <Setter Property="HeaderTemplate">
-        <Setter.Value>
-          <DataTemplate>
-            <TextBlock Text="{Binding}" Foreground="Black" FontSize="16" />
-          </DataTemplate>
-        </Setter.Value>
-      </Setter>
-    </Style>
-
-  </Window.Resources>
-  
   <Grid>
     
     <Grid.ColumnDefinitions>
@@ -170,7 +118,7 @@
         <RowDefinition Height="*" />
       </Grid.RowDefinitions>
       
-      <GroupBox Header="Incremental Backup History"  >
+      <GroupBox Header="Incremental Backup History" >
         <DockPanel>
           <DockPanel.Resources>
             <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
@@ -178,7 +126,7 @@
             </Style>
           </DockPanel.Resources>
           <WrapPanel DockPanel.Dock="Top" Background="LightSteelBlue">
-            <Button Content="New Incremental Backup" Click="NewIncremental_Click" />
+            <Button Content="New Incremental Backup" Click="NewIncremental_Click" Margin="10" />
             <Label Content="Active Incremental #:" FontSize="14" FontWeight="Bold" />
             <TextBlock DataContext="{Binding Mode=OneWay, Path=ActiveIncrementalRow}" 
                      Visibility="{Binding Mode=OneWay, Converter={conv:NotNullToVisibleConverter}}"> <!-- blank path passes DataContext object to converter -->
@@ -202,7 +150,7 @@
         </DockPanel>
       </GroupBox>
       
-      <GroupBox Header="Current Backup Files Working Set" Grid.Row="1" >
+      <GroupBox Header="Current Backup Files Working Set" Grid.Row="1" Margin="0 10 0 0" >
         <Grid>
           <Grid.RowDefinitions>
             <RowDefinition Height="auto" />
@@ -215,18 +163,21 @@
           </Grid.ColumnDefinitions>
 
           <WrapPanel DockPanel.Dock="Top" Background="LightSteelBlue" Grid.ColumnSpan="2">
-            <Button Content="Get All Current Files" Click="GatherCandidates_Click" />
+            <Button Content="Get All Current Files" Click="GatherCandidates_Click" Margin="10" />
             <Button Content="Show Folders" Click="ShowSelectedFolders_Click" />
             <Button Content="Show Files" Click="ShowIncludedFiles_Click" />
-            <Button Content="Compute Incremental" Margin="20 3 0 0" Click="ComputeIncremental_Click" />
+            <Button Content="Compute Incremental" Margin="20 0 0 0" Click="ComputeIncremental_Click" />
+            <CheckBox Name="chkOverrideExistingMediaSubsets" Foreground="DarkRed" FontWeight="Bold" VerticalAlignment="Center" 
+                      Margin="5"
+                      Visibility="Collapsed"><TextBlock>Override<LineBreak/>*DELETES DISCS*</TextBlock></CheckBox>
           </WrapPanel>
           
           <WrapPanel DockPanel.Dock="Top" Background="LightSteelBlue" Grid.Row="1" >
-            <Label Content="Discs Required: " />
-            <Label Name="lblDiscsRequired" FontWeight="Bold" />
-            <Label Content="Current Disc: "  />
-            <Label Name="lblCurrentDisc" FontWeight="Bold" />
-            <Button Content="Mark Current Disc Complete" Margin="10 3 0 3" />
+            <Label Content="Current Disc:" Margin="10 0"/>
+            <Label Name="lblCurrentDisc" FontWeight="Bold" Content="{Binding Mode=OneWay, Path=ActiveIncrementalRow[MaxMediaSubsetNumber]}" />
+            <CheckBox Name="chkHideCompleteMediaSubsets" Content="Hide Completed" VerticalAlignment="Center" Click="HideCompletedMediaSubsets_Click" Margin="10 5 0 5" />
+            <Button Content="Select Next Disc's Worth Of Files" Margin="10" Click="IdentifyNextMediaSubset_Click" />
+            <Button Content="Mark Current Disc Complete" Click="MediaSubsetCommit_Click" />
           </WrapPanel>
 
           <Border Background="LightSteelBlue" Grid.Row="1" Grid.Column="1" BorderThickness="0" >
