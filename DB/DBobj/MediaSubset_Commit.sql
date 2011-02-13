@@ -24,13 +24,26 @@ if not exists(select 1 from sysobjects where name = 'MediaSubset_Commit')
 	exec('create PROCEDURE MediaSubset_Commit as select 1 as one')
 GO
 alter PROCEDURE [dbo].[MediaSubset_Commit] 
-@IncrementalID INT
+@IncrementalID INT,
+@MediaSubsetNumber INT,
+@Files FileArchiveID_UDT readonly
 AS BEGIN
 	
 SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
 
-UPDATE MediaSubset SET Finalized = 1 
-WHERE MediaSubsetID = (SELECT MAX(MediaSubsetID) FROM MediaSubset WHERE IncrementalID = @IncrementalID)
+DECLARE @MediaSubsetID int
+SELECT @MediaSubsetID = MediaSubsetID FROM MediaSubset WHERE IncrementalID = @IncrementalID AND MediaSubsetNumber = @MediaSubsetNumber
+IF (@MediaSubsetID IS NULL)
+BEGIN
+  INSERT MediaSubset (IncrementalID, MediaSubsetNumber) VALUES (@IncrementalID, @MediaSubsetNumber)
+  SELECT @MediaSubsetID = SCOPE_IDENTITY()
+END
+
+UPDATE fa SET fa.MediaSubsetID = @MediaSubsetID
+FROM @Files f
+JOIN FileArchive fa ON fa.FileArchiveID = f.FileArchiveID
+
+UPDATE MediaSubset SET Finalized = 1 WHERE MediaSubsetID = @MediaSubsetID
 
 END
 GO

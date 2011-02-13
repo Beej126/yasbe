@@ -174,7 +174,7 @@
           
           <WrapPanel DockPanel.Dock="Top" Background="LightSteelBlue" Grid.Row="1" >
             <Label Content="Current Disc:" Margin="10 0"/>
-            <Label Name="lblCurrentDisc" FontWeight="Bold" Content="{Binding Mode=OneWay, Path=ActiveIncrementalRow[MaxMediaSubsetNumber]}" />
+            <Label Name="lblCurrentDisc" FontWeight="Bold" Content="{Binding Mode=OneWay, Path=MediaSubsetNumberCurrent}" />
             <CheckBox Name="chkHideCompleteMediaSubsets" Content="Hide Finalized" VerticalAlignment="Center" Click="HideCompletedMediaSubsets_Click" Margin="10 5 0 5" />
             <Button Content="Select Next Disc's Worth Of Files" Margin="10" Click="IdentifyNextMediaSubset_Click" />
             <Button Content="SymLink Selected Into Burn Folder" Click="SymLinkToBurn_Click"  />

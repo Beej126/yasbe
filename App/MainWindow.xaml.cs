@@ -89,6 +89,8 @@ namespace YASBE
         IncludedFiles = BackupProfiles_s.Tables[3];
         IncludedFiles.PrimaryKey = new DataColumn[] { IncludedFiles.Columns["FullPath"] };
 
+        MediaSubsetFilesCurrent = BackupProfiles_s.Tables[4];
+
         RefreshIncrementalInfo(true);
       }
     }
@@ -226,7 +228,15 @@ namespace YASBE
       set { SetValue(ActiveIncrementalRowProperty, value); }
     }
     public static readonly DependencyProperty ActiveIncrementalRowProperty =
-        DependencyProperty.Register("ActiveIncrementalRow", typeof(DataRow), typeof(MainWindow), new UIPropertyMetadata(null));
+      DependencyProperty.Register("ActiveIncrementalRow", typeof(DataRow), typeof(MainWindow), new UIPropertyMetadata(null, RefreshActiveIncrementalRowDependencies));//ARRRG, have no idea why it won't take the normal lamda expression wrapper rather than the method
+    static private void RefreshActiveIncrementalRowDependencies(DependencyObject o, DependencyPropertyChangedEventArgs args)
+    {
+      ((MainWindow)o).RefreshActiveIncrementalRowDependencies();
+    }
+    private void RefreshActiveIncrementalRowDependencies()
+    {
+      MediaSubsetNumberCurrent = Convert.ToInt16(ActiveIncrementalRow["MaxMediaSubsetNumber"]) + 1;
+    }
 
     public int? ActiveIncrementalID
     {
@@ -236,14 +246,13 @@ namespace YASBE
       }
     }
 
-    public int? CurrentMediaSubsetNumber
+    public int MediaSubsetNumberCurrent
     {
-      get
-      {
-        return ((ActiveIncrementalRow != null) ? Convert.ToInt16(ActiveIncrementalRow["MaxMediaSubsetNumber"]) + 1 : (int?)null);
-      }
+      get { return (int)GetValue(MediaSubsetNumberCurrentProperty); }
+      set { SetValue(MediaSubsetNumberCurrentProperty, value); }
     }
-
+    public static readonly DependencyProperty MediaSubsetNumberCurrentProperty =
+        DependencyProperty.Register("MediaSubsetNumberCurrent", typeof(int), typeof(MainWindow), new UIPropertyMetadata(0));
 
     /// <summary>
     /// </summary>
@@ -265,9 +274,11 @@ namespace YASBE
         Incremental_Proc.ExecuteDataTable();
 
         gridFilesWorkingSet.ItemsSource = Incremental_Proc.Tables[0].DefaultView; //whichever proc we fire, we get the files back in Table[0]
+        HideCompletedMediaSubsets(); 
 
         if (FullDetail)
         {
+
           //if we're just firing up and this is our base list of incrementals then assign it directly to the grid
           if (IncrementalTable == null)
           {
@@ -278,6 +289,7 @@ namespace YASBE
           else
           {
             IncrementalTable.Merge(Incremental_Proc.Tables[1], false); //TODO: check that the primary keys come through and line this up to work properly
+            RefreshActiveIncrementalRowDependencies();
           }
         }
       }
@@ -323,14 +335,26 @@ namespace YASBE
       }
     }
 
+    public DataTable MediaSubsetFilesCurrent = null;
+
     private void MediaSubsetCommit_Click(object sender, RoutedEventArgs e)
     {
+      MediaSubsetFilesCurrent.Clear();
+      foreach (DataRowView drv in GetCurrentMediaSubsetFiles())
+      {
+        DataRow r = MediaSubsetFilesCurrent.NewRow();
+        r["FileArchiveID"] = drv["FileArchiveID"];
+        MediaSubsetFilesCurrent.Rows.Add(r);
+      }
+
       using (Proc MediaSubset_Commit = new Proc("MediaSubset_Commit"))
       {
         MediaSubset_Commit["@IncrementalID"] = ActiveIncrementalID;
+        MediaSubset_Commit["@MediaSubsetNumber"] = MediaSubsetNumberCurrent;
+        MediaSubset_Commit["@Files"] = MediaSubsetFilesCurrent;
         MediaSubset_Commit.ExecuteNonQuery();
+        MediaSubsetFilesCurrent.Clear();
         RefreshIncrementalInfo(true); 
-        HideCompletedMediaSubsets_Click(null, null); //TODO: see if this is necessary
       }
     }
 
@@ -346,8 +370,6 @@ namespace YASBE
       v.RowFilter = (chkHideCompleteMediaSubsets.IsChecked.Value ? "Finalized = 0" : "");
       return (v);
     }
-
-
 
     public long TallyBytes
     {
@@ -365,8 +387,9 @@ namespace YASBE
         DataView files = HideCompletedMediaSubsets();
         files.Sort = "FullPath desc, Size desc";
 
-        long maxbytes = /*for testing*/ 10 * 1024 * 1024; //Convert.ToInt64(ActiveIncrementalRow["MediaBytes"]); 
-        int MediaSubSetNumber = CurrentMediaSubsetNumber.Value;
+        long maxbytes = /*for testing*/ 20 * 1024 * 1024; //Convert.ToInt64(ActiveIncrementalRow["MediaBytes"]); 
+        int MediaSubSetNumber = MediaSubsetNumberCurrent;
+        TallyBytes = 0;
 
         for (int i = 0; i < files.Count; i++)
         {
@@ -381,15 +404,22 @@ namespace YASBE
       }
     }
 
-    private void SymLinkToBurn_Click(object sender, RoutedEventArgs e)
+    public DataTable CurrentGridFilesTable = null;
+
+    private DataRowView[] GetCurrentMediaSubsetFiles()
     {
-      using (WaitCursorWrapper w = new WaitCursorWrapper())
       using (DataView v = new DataView(((DataView)gridFilesWorkingSet.ItemsSource).Table))
       {
         v.Sort = "MediaSubsetNumber desc";
-        DataRowView[] selected = v.FindRows(CurrentMediaSubsetNumber.Value);
+        return(v.FindRows(MediaSubsetNumberCurrent));
+      }
+    }
 
-        foreach (DataRowView r in selected)
+    private void SymLinkToBurn_Click(object sender, RoutedEventArgs e)
+    {
+      using (WaitCursorWrapper w = new WaitCursorWrapper())
+      {
+        foreach (DataRowView r in GetCurrentMediaSubsetFiles())
         {
           string fullpath  = r["FullPath"].ToString();
           Win32Helpers.CreateSymbolicLink(
@@ -397,7 +427,6 @@ namespace YASBE
             /*source filename*/fullpath, Win32Helpers.SYMBOLIC_LINK_FLAG.File);
         }
       }
-
     }
 
     private void AddSingleToBurn_Click(object sender, RoutedEventArgs e)
@@ -441,7 +470,7 @@ namespace YASBE
 
     public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
     {
-      return ((int)value == (App.Current.MainWindow as MainWindow).CurrentMediaSubsetNumber.Value); 
+      return ((int)value == (App.Current.MainWindow as MainWindow).MediaSubsetNumberCurrent); 
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)

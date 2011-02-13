@@ -79,6 +79,12 @@
           <AssociatedConnUserName />
           <FullPath>Incrementals_s.sql</FullPath>
         </FileNode>
+        <FileNode Name="FileArchiveID_UDT.sql">
+          <AssociatedConnectionMoniker>8c91a03d-f9b4-46c0-a305-b5dcc79ff907:BEEJQUAD\DEV2008:True</AssociatedConnectionMoniker>
+          <AssociatedConnSrvName>BEEJQUAD\DEV2008</AssociatedConnSrvName>
+          <AssociatedConnUserName />
+          <FullPath>FileArchiveID_UDT.sql</FullPath>
+        </FileNode>
         <FileNode Name="MediaSubset_Commit.sql">
           <AssociatedConnectionMoniker>8c91a03d-f9b4-46c0-a305-b5dcc79ff907:BEEJQUAD\DEV2008:True</AssociatedConnectionMoniker>
           <AssociatedConnSrvName>BEEJQUAD\DEV2008</AssociatedConnSrvName>

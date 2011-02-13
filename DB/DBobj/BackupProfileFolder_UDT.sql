@@ -12,6 +12,7 @@ SET QUOTED_IDENTIFIER OFF
 GO
 
 /*
+sp_procsearch 'BackupProfileFolder_UDT'
 drop proc BackupProfile_u
 drop TYPE BackupProfileFolder_UDT 
 */

@@ -25,7 +25,11 @@ AS BEGIN
 	
 SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
 
-SELECT fa.FileArchiveID, m.MediaSubsetNumber, m.Finalized, f.FullPath, fa.ModifiedDate, fa.Size
+SELECT 
+  f.FullPath, fa.ModifiedDate, fa.Size,
+  m.Finalized,
+  m.MediaSubsetNumber,
+  fa.FileArchiveID--, m.MediaSubsetID
 FROM MediaSubset m
 JOIN FileArchive fa ON fa.MediaSubsetID = m.MediaSubsetID
 JOIN [File] f ON f.FileID = fa.FileID
