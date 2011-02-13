@@ -35,6 +35,8 @@ SELECT * FROM @Folders
 DECLARE @Files File_UDT
 SELECT * FROM @Files
 
+DECLARE @MediaSubsetFiles FileArchiveID_UDT
+SELECT * FROM @MediaSubsetFiles
 END
 GO
 
