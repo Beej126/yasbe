@@ -41,6 +41,4 @@ public static class Extensions
     return (type == null) ? false : numericTypes.Contains(type);
   }
 
-
-
 }

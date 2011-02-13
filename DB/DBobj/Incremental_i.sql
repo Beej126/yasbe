@@ -35,7 +35,7 @@ VALUES  ( @BackupProfileID )
 
 SELECT @IncrementalID = SCOPE_IDENTITY()
 
-SELECT * FROM Incremental ORDER BY IncrementalID desc
+EXEC Incrementals_s @BackupProfileID = @BackupProfileID
 
 END
 GO

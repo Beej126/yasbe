@@ -55,11 +55,41 @@
           <AssociatedConnUserName />
           <FullPath>Files_UploadCompare.sql</FullPath>
         </FileNode>
+        <FileNode Name="Incremental_Files.sql">
+          <AssociatedConnectionMoniker>8c91a03d-f9b4-46c0-a305-b5dcc79ff907:BEEJQUAD\DEV2008:True</AssociatedConnectionMoniker>
+          <AssociatedConnSrvName>BEEJQUAD\DEV2008</AssociatedConnSrvName>
+          <AssociatedConnUserName />
+          <FullPath>Incremental_Files.sql</FullPath>
+        </FileNode>
+        <FileNode Name="Incremental_FullDetail.sql">
+          <AssociatedConnectionMoniker>8c91a03d-f9b4-46c0-a305-b5dcc79ff907:BEEJQUAD\DEV2008:True</AssociatedConnectionMoniker>
+          <AssociatedConnSrvName>BEEJQUAD\DEV2008</AssociatedConnSrvName>
+          <AssociatedConnUserName />
+          <FullPath>Incremental_FullDetail.sql</FullPath>
+        </FileNode>
         <FileNode Name="Incremental_i.sql">
           <AssociatedConnectionMoniker>8c91a03d-f9b4-46c0-a305-b5dcc79ff907:BEEJQUAD\DEV2008:True</AssociatedConnectionMoniker>
           <AssociatedConnSrvName>BEEJQUAD\DEV2008</AssociatedConnSrvName>
           <AssociatedConnUserName />
           <FullPath>Incremental_i.sql</FullPath>
+        </FileNode>
+        <FileNode Name="Incrementals_s.sql">
+          <AssociatedConnectionMoniker>8c91a03d-f9b4-46c0-a305-b5dcc79ff907:BEEJQUAD\DEV2008:True</AssociatedConnectionMoniker>
+          <AssociatedConnSrvName>BEEJQUAD\DEV2008</AssociatedConnSrvName>
+          <AssociatedConnUserName />
+          <FullPath>Incrementals_s.sql</FullPath>
+        </FileNode>
+        <FileNode Name="MediaSubset_Commit.sql">
+          <AssociatedConnectionMoniker>8c91a03d-f9b4-46c0-a305-b5dcc79ff907:BEEJQUAD\DEV2008:True</AssociatedConnectionMoniker>
+          <AssociatedConnSrvName>BEEJQUAD\DEV2008</AssociatedConnSrvName>
+          <AssociatedConnUserName />
+          <FullPath>MediaSubset_Commit.sql</FullPath>
+        </FileNode>
+        <FileNode Name="SQLQuery1.sql">
+          <AssociatedConnectionMoniker>8c91a03d-f9b4-46c0-a305-b5dcc79ff907:BEEJQUAD\DEV2008:True</AssociatedConnectionMoniker>
+          <AssociatedConnSrvName>BEEJQUAD\DEV2008</AssociatedConnSrvName>
+          <AssociatedConnUserName />
+          <FullPath>SQLQuery1.sql</FullPath>
         </FileNode>
       </Items>
     </LogicalFolder>

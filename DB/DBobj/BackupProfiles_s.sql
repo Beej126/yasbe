@@ -27,8 +27,6 @@ SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
 
 SELECT * FROM BackupProfile
 
-SELECT * FROM Incremental ORDER BY IncrementalID DESC
-
 SELECT * FROM MediaSize ORDER BY MediaSizeID
 
 DECLARE @Folders BackupProfileFolder_UDT
