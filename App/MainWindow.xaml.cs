@@ -162,7 +162,7 @@ namespace YASBE
 
     private void OpenStagingFolder_Click(object sender, RoutedEventArgs e)
     {
-      System.Diagnostics.Process.Start(cbxDrives.SelectedItem.ToString());
+      System.Diagnostics.Process.Start(cbxBurnFolders.SelectedItem.ToString());
     }
 
     private void BackupProfileSave_Click(object sender, RoutedEventArgs e)
@@ -240,7 +240,7 @@ namespace YASBE
     {
       get
       {
-        return ((ActiveIncrementalRow != null) ? Convert.ToInt16(ActiveIncrementalRow["MaxMediaSubsetNumber"]) : (int?)null);
+        return ((ActiveIncrementalRow != null) ? Convert.ToInt16(ActiveIncrementalRow["MaxMediaSubsetNumber"]) + 1 : (int?)null);
       }
     }
 
@@ -347,6 +347,16 @@ namespace YASBE
       return (v);
     }
 
+
+
+    public long TallyBytes
+    {
+      get { return (long)GetValue(TallyBytesProperty); }
+      set { SetValue(TallyBytesProperty, value); }
+    }
+    public static readonly DependencyProperty TallyBytesProperty =
+        DependencyProperty.Register("TallyBytes", typeof(long), typeof(MainWindow), new UIPropertyMetadata((long)0));
+
     private void IdentifyNextMediaSubset_Click(object sender, RoutedEventArgs e)
     {
       using (WaitCursorWrapper w = new WaitCursorWrapper())
@@ -355,19 +365,51 @@ namespace YASBE
         DataView files = HideCompletedMediaSubsets();
         files.Sort = "FullPath desc, Size desc";
 
-        long maxbytes = 500 * 1024 * 1024;
+        long maxbytes = /*for testing*/ 10 * 1024 * 1024; //Convert.ToInt64(ActiveIncrementalRow["MediaBytes"]); 
+        int MediaSubSetNumber = CurrentMediaSubsetNumber.Value;
 
-        long tallybytes = 0;
         for (int i = 0; i < files.Count; i++)
         {
-          DataGridRow gridrow = WPFHelpers.GetDataGridRow(gridFilesWorkingSet, i);
+          //DataGridRow gridrow = WPFHelpers.GetDataGridRow(gridFilesWorkingSet, i);
           long nextsize = Convert.ToInt64(files[i]["Size"]);
-          if (tallybytes + nextsize > maxbytes) break;
+          if (TallyBytes + nextsize > maxbytes) break;
 
-          gridrow.IsSelected = true;
-          tallybytes += nextsize;
+          //gridrow.IsSelected = true;
+          files[i]["MediaSubsetNumber"] = MediaSubSetNumber;
+          TallyBytes += nextsize;
         }
       }
+    }
+
+    private void SymLinkToBurn_Click(object sender, RoutedEventArgs e)
+    {
+      using (WaitCursorWrapper w = new WaitCursorWrapper())
+      using (DataView v = new DataView(((DataView)gridFilesWorkingSet.ItemsSource).Table))
+      {
+        v.Sort = "MediaSubsetNumber desc";
+        DataRowView[] selected = v.FindRows(CurrentMediaSubsetNumber.Value);
+
+        foreach (DataRowView r in selected)
+        {
+          string fullpath  = r["FullPath"].ToString();
+          Win32Helpers.CreateSymbolicLink(
+            /*new symlink filename*/System.IO.Path.Combine(cbxBurnFolders.SelectedValue.ToString(), System.IO.Path.GetFileName(fullpath)), 
+            /*source filename*/fullpath, Win32Helpers.SYMBOLIC_LINK_FLAG.File);
+        }
+      }
+
+    }
+
+    private void AddSingleToBurn_Click(object sender, RoutedEventArgs e)
+    {
+      DataRowView r = (DataRowView)gridFilesWorkingSet.SelectedItem;
+      TallyBytes += Convert.ToInt64(r["Size"]);
+      //Win32Helpers.CreateSymbolicLink(/*dest*/cbxBurnFolders.SelectedValue.ToString(), /*source*/r["FullPath"].ToString(), Win32Helpers.SYMBOLIC_LINK_FLAG.File);
+    }
+
+    private void RemoveSingleToBurn_Click(object sender, RoutedEventArgs e)
+    {
+      //ActiveIncrementalRow = ((DataRowView)gridIncrementalHistory.SelectedItem).Row;
     }
 
   }
@@ -391,6 +433,24 @@ namespace YASBE
       throw new NotImplementedException();
     }
   }
+
+
+  public class IsFileInCurrentMediaSubsetConverter : WPFValueConverters.MarkupExtensionConverter, IValueConverter //nugget: leverage the JScript.dll StringEvaluator to build dynamic ValueConverters
+  {
+    public IsFileInCurrentMediaSubsetConverter() { } //to avoid an XAML annoying warning: "No constructor for type 'xyz' has 0 parameters."  Somehow the inherited one doesn'SelectedFolders do the trick!?!  I guess it's a reflection bug.
+
+    public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
+    {
+      return ((int)value == (App.Current.MainWindow as MainWindow).CurrentMediaSubsetNumber.Value); 
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
+    {
+      throw new NotImplementedException();
+    }
+  }
+
+
 
 
 }

@@ -34,7 +34,7 @@
       
       <StackPanel Orientation="Vertical">
       
-        <StackPanel Orientation="Horizontal" >
+        <StackPanel Orientation="Horizontal" Visibility="Collapsed" >
         
           <Button Click="DoIt_Click" >
             <StackPanel Orientation="Horizontal">
@@ -95,12 +95,12 @@
 
         <StackPanel Orientation="Horizontal" Margin="0 10 0 0">
           <TextBlock Text="Windows Burn Staging Folder:"  />
-          <ComboBox Name="cbxDrives" ItemsSource="{Binding Mode=OneTime, Source={x:Static local:MainWindow.WindowsBurnStagingFolders}}" SelectedIndex="0" />
+          <ComboBox Name="cbxBurnFolders" ItemsSource="{Binding Mode=OneTime, Source={x:Static local:MainWindow.WindowsBurnStagingFolders}}" SelectedIndex="0" />
           <Button Content="Open In Explorer..." Click="OpenStagingFolder_Click" />
             <!--Button.Style>
               <Style TargetType="{x:Type Button}" BasedOn="{StaticResource {x:Type Button}}"> <nugget: basing a Style off the Default Style>
                 <Style.Triggers>
-                  <DataTrigger Binding="{Binding ElementName=cbxDrives, Path=SelectedIndex}" Value="-1"> <nugget: Button.IsEnabled based on ComboBox.SelectedIndex >
+                  <DataTrigger Binding="{Binding ElementName=cbxBurnFolders, Path=SelectedIndex}" Value="-1"> <nugget: Button.IsEnabled based on ComboBox.SelectedIndex >
                     <Setter Property="Button.IsEnabled" Value="False" />
                   </DataTrigger>
                 </Style.Triggers>
@@ -175,14 +175,21 @@
           <WrapPanel DockPanel.Dock="Top" Background="LightSteelBlue" Grid.Row="1" >
             <Label Content="Current Disc:" Margin="10 0"/>
             <Label Name="lblCurrentDisc" FontWeight="Bold" Content="{Binding Mode=OneWay, Path=ActiveIncrementalRow[MaxMediaSubsetNumber]}" />
-            <CheckBox Name="chkHideCompleteMediaSubsets" Content="Hide Completed" VerticalAlignment="Center" Click="HideCompletedMediaSubsets_Click" Margin="10 5 0 5" />
+            <CheckBox Name="chkHideCompleteMediaSubsets" Content="Hide Finalized" VerticalAlignment="Center" Click="HideCompletedMediaSubsets_Click" Margin="10 5 0 5" />
             <Button Content="Select Next Disc's Worth Of Files" Margin="10" Click="IdentifyNextMediaSubset_Click" />
+            <Button Content="SymLink Selected Into Burn Folder" Click="SymLinkToBurn_Click"  />
             <Button Content="Mark Current Disc Complete" Click="MediaSubsetCommit_Click" />
           </WrapPanel>
 
           <Border Background="LightSteelBlue" Grid.Row="1" Grid.Column="1" BorderThickness="0" >
-            <TextBlock VerticalAlignment="Bottom" Margin="5 0 3 0"
-                       Text="{Binding Mode=OneWay, ElementName=gridFilesWorkingSet, Path=Items.Count, StringFormat='{}{0:#,#,#} items'}" />
+            <WrapPanel VerticalAlignment="Bottom">
+              <TextBlock VerticalAlignment="Bottom" Margin="5 0 3 0"
+                         Text="{Binding Mode=OneWay, ElementName=gridFilesWorkingSet, Path=Items.Count, StringFormat='{}{0:#,#,0} total'}" />
+              <TextBlock VerticalAlignment="Bottom" Margin="5 0 3 0"
+                         Text="{Binding Mode=OneWay, ElementName=gridFilesWorkingSet, Path=SelectedItems.Count, StringFormat='({0:#,#,0} selected,'}" />
+              <TextBlock VerticalAlignment="Bottom" Margin="5 0 3 0"
+                         Text="{Binding Mode=OneWay, Path=TallyBytes, StringFormat='{}{0:#,#,0} Bytes)'}" />
+            </WrapPanel>
           </Border>
 
           <DataGrid Grid.Row="2" Grid.ColumnSpan="2"
@@ -198,8 +205,31 @@
               <Style x:Key="RightAlignStyling" TargetType="{x:Type TextBlock}">
                 <Setter Property="TextAlignment" Value="Right" />
               </Style>
-            
-            </DataGrid.Resources>
+
+              <!-- nugget: colorizing individual cell elements based on underlying data field values -->
+              <Style TargetType="{x:Type DataGridCell}" BasedOn="{StaticResource PrettyDataGridCellStyle}">
+                <Style.Triggers>
+                  <DataTrigger Value="True" Binding="{Binding Path=MediaSubsetNumber, Converter={local:IsFileInCurrentMediaSubsetConverter}}">
+                    <Setter Property="Background" Value="LightYellow" />
+                  </DataTrigger>
+                </Style.Triggers>
+              </Style>
+
+             </DataGrid.Resources>
+
+            <!--DataGrid.Columns>
+              <DataGridTemplateColumn>
+                <DataGridTemplateColumn.CellTemplate>
+                  <DataTemplate>
+                    <StackPanel Orientation="Horizontal">
+                      <Button Content="+" ToolTip="Add To Burn Folder" Click="AddSingleToBurn_Click" Padding="0" Margin="0" />
+                      <Button Content="-" ToolTip="Remove From Burn Folder" Click="RemoveSingleToBurn_Click" Padding="0" Margin="0" />
+                    </StackPanel>
+                  </DataTemplate>
+                </DataGridTemplateColumn.CellTemplate>
+              </DataGridTemplateColumn>
+            </DataGrid.Columns-->
+
           </DataGrid>
         </Grid>
       </GroupBox>
