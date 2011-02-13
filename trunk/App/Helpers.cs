@@ -5,8 +5,6 @@ using System.Text;
 
 using System.IO;
 using System.Security.Cryptography;
-using Microsoft.Win32;
-using System.Runtime.InteropServices;
 using System.Collections.ObjectModel;
 
 using System.Windows.Controls;
@@ -20,17 +18,6 @@ namespace YASBE
 {
   static class Helpers
   {
-
-    enum SYMBOLIC_LINK_FLAG
-    {
-      File = 0,
-      Directory = 1
-    }
-
-    [DllImport("kernel32.dll")]
-    [return: System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.I1)]
-    static extern bool CreateSymbolicLink(string lpSymlinkFileName, string lpTargetFileName, SYMBOLIC_LINK_FLAG dwFlags);
-
 
     static public string GetMD5HashFromFile(string fileName)
     {
