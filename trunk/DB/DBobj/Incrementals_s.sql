@@ -54,14 +54,14 @@ WHERE p.BackupProfileID = @BackupProfileID
 
 SELECT 
   i.IncrementalID, i.BackupDate, 
-  max(m.MediaSubsetNumber) AS MaxMediaSubsetNumber,
+  ISNULL(max(m.MediaSubsetNumber),0) AS MaxMediaSubsetNumber,
   SUM(fa.[Size]) AS [Total Bytes],
   CONVERT(VARCHAR, (SUM(fa.[Size]) / @MediaSize)) +  + ' Full Discs (+' + 
     CONVERT(VARCHAR, CONVERT(DECIMAL(19,3), (SUM(fa.[Size]) % @MediaSize) / (1024.0 * 1024.0 * 1024.0) )) + ' GB leftover)' AS [Discs Required],
   @MediaSize AS [MediaBytes]
 FROM Incremental i
-JOIN MediaSubset m ON m.IncrementalID = i.IncrementalID
-join FileArchive fa ON fa.MediaSubsetID = m.MediaSubsetID
+LEFT JOIN MediaSubset m ON m.IncrementalID = i.IncrementalID
+LEFT join FileArchive fa ON fa.MediaSubsetID = m.MediaSubsetID
 WHERE i.BackupProfileID = @BackupProfileID
 AND (@IncrementalID IS NULL OR i.IncrementalID = @IncrementalID)
 GROUP BY i.IncrementalID, i.BackupDate

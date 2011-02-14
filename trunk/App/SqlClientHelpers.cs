@@ -317,6 +317,28 @@ public static class SqlClientHelpers
   }
   */
 
+  public static DataTable NewTableFromDataView(DataView v, params string[] ColNames)
+  {
+    DataTable t = new DataTable();
+    DataColumn[] cols = null;
+    if (ColNames == null || ColNames.Length == 0) cols = (from DataColumn c in v.Table.Columns select c).ToArray();
+    else cols = (from DataColumn c in v.Table.Columns join string s in ColNames on c.ColumnName equals s select c).ToArray();
+
+    foreach (DataColumn c in cols) {
+      t.Columns.Add(new DataColumn(c.ColumnName, c.DataType));
+    }
+
+    foreach (DataRowView drv in v)
+    {
+      DataRow r = t.NewRow();
+      r["FileArchiveID"] = drv["FileArchiveID"];
+      t.Rows.Add(r);
+    }
+
+    return(t);
+  }
+
+
   public static void ClearRows(object v)
   {
     DataView dv = v as DataView;

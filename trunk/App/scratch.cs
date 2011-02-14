@@ -41,4 +41,23 @@
       datagrid2.ItemsSource = null;
       datagrid2.ItemsSource = (from v in finallist.Values select v).ToArray();
     }
+ * 
+ * 
+ * 
+private DataTable _CurrentGridFilesTable = null;
+    public DataTable CurrentGridFilesTable
+    {
+      get
+      {
+        return(_CurrentGridFilesTable);
+      }
+      set
+      {
+        _CurrentGridFilesTable = value;
+
+        if (dvCurrentMediaSubsetFiles != null) dvCurrentMediaSubsetFiles.Dispose();
+        dvCurrentMediaSubsetFiles = new DataView(_CurrentGridFilesTable);
+        dvCurrentMediaSubsetFiles.RowFilter = "MediaSubsetNumber = " + MediaSubsetNumberCurrent;
+      }
+    }
 */

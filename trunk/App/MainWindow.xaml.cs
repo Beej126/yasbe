@@ -24,6 +24,8 @@ using System.Data.SqlClient;
 
 using System.Collections.Specialized;
 
+using Microsoft.SqlServer.Server;
+
 namespace YASBE
 {
   public partial class MainWindow : Window
@@ -89,8 +91,6 @@ namespace YASBE
         IncludedFiles = BackupProfiles_s.Tables[3];
         IncludedFiles.PrimaryKey = new DataColumn[] { IncludedFiles.Columns["FullPath"] };
 
-        MediaSubsetFilesCurrent = BackupProfiles_s.Tables[4];
-
         RefreshIncrementalInfo(true);
       }
     }
@@ -121,7 +121,7 @@ namespace YASBE
     private void DoIt_Click(object sender, RoutedEventArgs e)
     {
       BackupFile.List.Clear();
-      gridFilesWorkingSet.ItemsSource = BackupFile.List;
+      gridFilesWorkingSet.ItemsSource = BackupFile.List; 
 
       string folder = @"D:\Photos\_Main_Library\1 - Friends\";
       System.IO.DirectoryInfo di = new DirectoryInfo(folder);
@@ -197,7 +197,7 @@ namespace YASBE
       using (WaitCursorWrapper w = new WaitCursorWrapper())
       {
         FileSystemNode.GetSelected(SelectedFolders, IncludedFiles);
-        gridFilesWorkingSet.ItemsSource = IncludedFiles.DefaultView;
+        CurrentGridFilesTable = IncludedFiles; //.DefaultView; //gridFilesWorkingSet.ItemsSource 
       }
     }
 
@@ -236,6 +236,7 @@ namespace YASBE
     private void RefreshActiveIncrementalRowDependencies()
     {
       MediaSubsetNumberCurrent = Convert.ToInt16(ActiveIncrementalRow["MaxMediaSubsetNumber"]) + 1;
+      GridFilesTableChanged();
     }
 
     public int? ActiveIncrementalID
@@ -273,7 +274,7 @@ namespace YASBE
         Incremental_Proc["@IncrementalID"] = ActiveIncrementalID;
         Incremental_Proc.ExecuteDataTable();
 
-        gridFilesWorkingSet.ItemsSource = Incremental_Proc.Tables[0].DefaultView; //whichever proc we fire, we get the files back in Table[0]
+        CurrentGridFilesTable = Incremental_Proc.Tables[0];//gridFilesWorkingSet.ItemsSource  //.DefaultView; //whichever proc we fire, we get the files back in Table[0]
         HideCompletedMediaSubsets(); 
 
         if (FullDetail)
@@ -297,12 +298,14 @@ namespace YASBE
 
     private void ShowSelectedFolders_Click(object sender, RoutedEventArgs e)
     {
-      gridFilesWorkingSet.ItemsSource = SelectedFolders.DefaultView;
+      //gridFilesWorkingSet.ItemsSource = SelectedFolders.DefaultView;
+      CurrentGridFilesTable = SelectedFolders;
     }
 
     private void ShowIncludedFiles_Click(object sender, RoutedEventArgs e)
     {
-      gridFilesWorkingSet.ItemsSource = IncludedFiles.DefaultView;    
+      //gridFilesWorkingSet.ItemsSource = IncludedFiles.DefaultView;    
+      CurrentGridFilesTable = IncludedFiles;
     }
 
     private void ComputeIncremental_Click(object sender, RoutedEventArgs e)
@@ -335,25 +338,16 @@ namespace YASBE
       }
     }
 
-    public DataTable MediaSubsetFilesCurrent = null;
-
     private void MediaSubsetCommit_Click(object sender, RoutedEventArgs e)
     {
-      MediaSubsetFilesCurrent.Clear();
-      foreach (DataRowView drv in GetCurrentMediaSubsetFiles())
-      {
-        DataRow r = MediaSubsetFilesCurrent.NewRow();
-        r["FileArchiveID"] = drv["FileArchiveID"];
-        MediaSubsetFilesCurrent.Rows.Add(r);
-      }
-
       using (Proc MediaSubset_Commit = new Proc("MediaSubset_Commit"))
       {
         MediaSubset_Commit["@IncrementalID"] = ActiveIncrementalID;
         MediaSubset_Commit["@MediaSubsetNumber"] = MediaSubsetNumberCurrent;
-        MediaSubset_Commit["@Files"] = MediaSubsetFilesCurrent;
+        MediaSubset_Commit["@Files"] = SqlClientHelpers.NewTableFromDataView(dvCurrentMediaSubsetFiles, "FileArchiveID");
         MediaSubset_Commit.ExecuteNonQuery();
-        MediaSubsetFilesCurrent.Clear();
+        SelectedMediaSubsetFilesBytes = 0;
+        SelectedMediaSubsetFilesCount = 0;
         RefreshIncrementalInfo(true); 
       }
     }
@@ -365,19 +359,35 @@ namespace YASBE
 
     private DataView HideCompletedMediaSubsets()
     {
-      DataView v = (DataView)gridFilesWorkingSet.ItemsSource;
+      DataView v = CurrentGridFilesTable.DefaultView;
       if (v == null || !v.Table.Columns.Contains("Finalized")) return (null);
       v.RowFilter = (chkHideCompleteMediaSubsets.IsChecked.Value ? "Finalized = 0" : "");
       return (v);
     }
 
-    public long TallyBytes
+    public long SelectedMediaSubsetFilesBytes
     {
-      get { return (long)GetValue(TallyBytesProperty); }
-      set { SetValue(TallyBytesProperty, value); }
+      get { return (long)GetValue(SelectedMediaSubsetFilesBytesProperty); }
+      set { SetValue(SelectedMediaSubsetFilesBytesProperty, value); }
     }
-    public static readonly DependencyProperty TallyBytesProperty =
-        DependencyProperty.Register("TallyBytes", typeof(long), typeof(MainWindow), new UIPropertyMetadata((long)0));
+    public static readonly DependencyProperty SelectedMediaSubsetFilesBytesProperty =
+        DependencyProperty.Register("SelectedMediaSubsetFilesBytes", typeof(long), typeof(MainWindow), new UIPropertyMetadata((long)0));
+
+
+
+    public int SelectedMediaSubsetFilesCount
+    {
+      get { return (int)GetValue(SelectedMediaSubsetFilesCountProperty); }
+      set { SetValue(SelectedMediaSubsetFilesCountProperty, value); }
+    }
+    public static readonly DependencyProperty SelectedMediaSubsetFilesCountProperty =
+        DependencyProperty.Register("SelectedMediaSubsetFilesCount", typeof(int), typeof(MainWindow), new UIPropertyMetadata(0));
+
+
+    //private bool CheckFilesGirdIsFileArchive()
+    //{
+    //  MessageBox.Show("Select [Compute Incremental] first", "Incremental Backup Files List Not Yet Established", MessageBoxButton.OK, MessageBoxImage.Hand);
+    //}
 
     private void IdentifyNextMediaSubset_Click(object sender, RoutedEventArgs e)
     {
@@ -387,44 +397,62 @@ namespace YASBE
         DataView files = HideCompletedMediaSubsets();
         files.Sort = "FullPath desc, Size desc";
 
-        long maxbytes = /*for testing*/ 20 * 1024 * 1024; //Convert.ToInt64(ActiveIncrementalRow["MediaBytes"]); 
+        long maxbytes = Convert.ToInt64(ActiveIncrementalRow["MediaBytes"]); //15 * 1024 * 1024; //
         int MediaSubSetNumber = MediaSubsetNumberCurrent;
-        TallyBytes = 0;
+        SelectedMediaSubsetFilesBytes = 0;
 
         for (int i = 0; i < files.Count; i++)
         {
           //DataGridRow gridrow = WPFHelpers.GetDataGridRow(gridFilesWorkingSet, i);
           long nextsize = Convert.ToInt64(files[i]["Size"]);
-          if (TallyBytes + nextsize > maxbytes) break;
+          if (SelectedMediaSubsetFilesBytes + nextsize > maxbytes) {
+            SelectedMediaSubsetFilesCount = i;
+            break;
+          }
 
           //gridrow.IsSelected = true;
           files[i]["MediaSubsetNumber"] = MediaSubSetNumber;
-          TallyBytes += nextsize;
+          SelectedMediaSubsetFilesBytes += nextsize;
         }
       }
     }
 
-    public DataTable CurrentGridFilesTable = null;
 
-    private DataRowView[] GetCurrentMediaSubsetFiles()
+
+    public DataTable CurrentGridFilesTable
     {
-      using (DataView v = new DataView(((DataView)gridFilesWorkingSet.ItemsSource).Table))
-      {
-        v.Sort = "MediaSubsetNumber desc";
-        return(v.FindRows(MediaSubsetNumberCurrent));
-      }
+      get { return (DataTable)GetValue(CurrentGridFilesTableProperty); }
+      set { SetValue(CurrentGridFilesTableProperty, value); }
+    }
+
+    public DataView dvCurrentMediaSubsetFiles = null;
+    public static readonly DependencyProperty CurrentGridFilesTableProperty =
+        DependencyProperty.Register("CurrentGridFilesTable", typeof(DataTable), typeof(MainWindow),
+        new UIPropertyMetadata(null, propertyChangedCallback: (o, a) => (o as MainWindow).GridFilesTableChanged() ));
+
+    private void GridFilesTableChanged()
+    {
+      CurrentGridFilesTable.DefaultView.Sort = "FullPath desc, Size desc";
+      if (dvCurrentMediaSubsetFiles != null) dvCurrentMediaSubsetFiles.Dispose();
+      dvCurrentMediaSubsetFiles = null;
+      if (!CurrentGridFilesTable.Columns.Contains("MediaSubsetNumber")) return;
+      dvCurrentMediaSubsetFiles = new DataView(CurrentGridFilesTable);
+      dvCurrentMediaSubsetFiles.RowFilter = String.Format("MediaSubsetNumber = {0}", MediaSubsetNumberCurrent);
+      if (CurrentGridFilesTable.DefaultView.RowFilter != "") dvCurrentMediaSubsetFiles.RowFilter += "and " + CurrentGridFilesTable.DefaultView.RowFilter;
+      dvCurrentMediaSubsetFiles.Sort = CurrentGridFilesTable.DefaultView.Sort;
     }
 
     private void SymLinkToBurn_Click(object sender, RoutedEventArgs e)
     {
       using (WaitCursorWrapper w = new WaitCursorWrapper())
       {
-        foreach (DataRowView r in GetCurrentMediaSubsetFiles())
+        foreach (DataRowView r in dvCurrentMediaSubsetFiles)
         {
           string fullpath  = r["FullPath"].ToString();
-          Win32Helpers.CreateSymbolicLink(
-            /*new symlink filename*/System.IO.Path.Combine(cbxBurnFolders.SelectedValue.ToString(), System.IO.Path.GetFileName(fullpath)), 
-            /*source filename*/fullpath, Win32Helpers.SYMBOLIC_LINK_FLAG.File);
+          string sympath = System.IO.Path.Combine(cbxBurnFolders.SelectedValue.ToString(), fullpath.Replace(":", ""));
+          Directory.CreateDirectory(sympath.Replace(System.IO.Path.GetFileName(sympath), ""));
+
+          Win32Helpers.CreateSymbolicLink(sympath, fullpath, Win32Helpers.SYMBOLIC_LINK_FLAG.File);
         }
       }
     }
@@ -432,7 +460,7 @@ namespace YASBE
     private void AddSingleToBurn_Click(object sender, RoutedEventArgs e)
     {
       DataRowView r = (DataRowView)gridFilesWorkingSet.SelectedItem;
-      TallyBytes += Convert.ToInt64(r["Size"]);
+      SelectedMediaSubsetFilesBytes += Convert.ToInt64(r["Size"]);
       //Win32Helpers.CreateSymbolicLink(/*dest*/cbxBurnFolders.SelectedValue.ToString(), /*source*/r["FullPath"].ToString(), Win32Helpers.SYMBOLIC_LINK_FLAG.File);
     }
 
