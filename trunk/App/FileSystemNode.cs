@@ -9,7 +9,7 @@ using System.Data;
 
 using System.Collections.Specialized;
 
-using FileSystemNodes = System.Collections.Generic.Dictionary<string, FileSystemNode>; //nugget: type aliasing, very handy, basic inheritance isn'SelectedFolders as clean
+using FileSystemNodes = System.Collections.Generic.Dictionary<string, FileSystemNode>; //nugget: type aliasing, very handy, basic inheritance isn'SelectedFoldersTable as clean
 
 public class FileSystemNode : DependencyObject
 {
@@ -18,7 +18,7 @@ public class FileSystemNode : DependencyObject
   public string FullPath { get { return (((Parent == null) ? "" : Parent.FullPath) + SubPath + ((this is FolderNode)?"\\":"")); } }
   public string SubPath { get; protected set; }
   public FileSystemNode Parent { get; protected set; }
-  public bool IsAncestorSelected { get { return (Parent != null && (Parent.IsSelected || Parent.IsAncestorSelected)); } } //nugget: i like simplicity of this line, it either immediately stops on the current parent or walks up the tree
+  public bool IsAncestorSelected { get { return (Parent != null && (Parent.IsSelected || Parent.IsAncestorSelected)); } } //nugget: recordindex like simplicity of this line, it either immediately stops on the current parent or walks up the tree
   public bool IsMissing { get; protected set; }
 
   public event Action IsSelectedChanged;
@@ -57,7 +57,7 @@ public class FileSystemNode : DependencyObject
 
   private void SetIsExcluded()
   {
-    IsExcluded = IsSelected && IsAncestorSelected && (!IsSubSelected /*this is redundant because filenodes can'SelectedFolders be subselected: || this is FileNode*/); //NUGGET: 2011_02_11 12:56AM NAILED IT!!!! FUCK YEAH... this took me 4EVER
+    IsExcluded = IsSelected && IsAncestorSelected && (!IsSubSelected /*this is redundant because filenodes can'SelectedFoldersTable be subselected: || this is FileNode*/); //NUGGET: 2011_02_11 12:56AM NAILED IT!!!! FUCK YEAH... this took me 4EVER
   }
 
   static private void RefreshIsSubSelected(FileSystemNode node)
@@ -95,26 +95,26 @@ public class FileSystemNode : DependencyObject
   static private void LoadNode(FolderNode parentnode, string[] FullPath, ref int depthcounter)
   {
     bool IsFolder = (FullPath.Last() == ""); //folders come with a trailing slash which creates an empty last element as a basic way to differentiate them from files
-    FileSystemNodes currentnodelist = (parentnode == null) ? RootDirectories : IsFolder ? parentnode.Children : null /* <= this should never exist, i.e. trying to load a file without having an existing parent's child list to add it to, because the parents get created as we go down the tree */;
+    FileSystemNodes currentnodelist = (parentnode == null) ? RootDirectories : IsFolder ? parentnode.Children : null /* <= this should never exist, recordindex.e. trying to load a file without having an existing parent's child list to add it to, because the parents get created as we go down the tree */;
     string path = String.Join("\\", FullPath.Take(depthcounter) /*1 based index*/) + (IsFolder ? "\\" : "");
 
-    //if the current node doesn'SelectedFolders show up in our tree...
+    //if the current node doesn'SelectedFoldersTable show up in our tree...
     FileSystemNode node = null;
     if (!currentnodelist.TryGetValue(path, out node))
     {
-      //then create it as a missing node (i.e. deleted since we last loaded this backup profile)
+      //then create it as a missing node (recordindex.e. deleted since we last loaded this backup profile)
       string name = FullPath[depthcounter-1]; //zero based index
       string fullpath = String.Join("\\", FullPath);
       if (IsFolder) node = new FolderNode(parentnode, name); 
       else node = new FileNode(parentnode, name);
 
       //TODO: the one visual bummer about this is that missing folders are added way at the bottom of the children, under the files
-      //  maybe that's sort of a good thing so they stand out even more... but i would've preferred them to be at the very top
+      //  maybe that's sort of a good thing so they stand out even more... but recordindex would've preferred them to be at the very top
       //  since the Children are demand loaded with the filesystem before we can add to the list it's tough to design around w/o making things undesirably messy (e.g. "IsChildrenLoaded" flag, etc)
       if (parentnode != null) parentnode.Children.Add(node.FullPath, node); 
     }
 
-    //when we get to the bottom of the path, we've found our prey!
+    //when we get to the bottom of the newfolder, we've found our prey!
     if (depthcounter++ == (IsFolder ? FullPath.Length - 1 : FullPath.Length)) //again, as stated above, folders come with an extra empty last element
     {
       node.IsSelected = true;
@@ -139,7 +139,7 @@ public class FileSystemNode : DependencyObject
     IsMissing = true; //this constructor fires first when we chain them so the FileSystemInfo based constructor gets final say on this flag
   }
 
-  //static public List<FileSystemNode> FlatList = new List<FileSystemNode>(); //nugget: interestingly complex case... since another Static initializer (RootDirectories) fires code that uses this Static variable, you have to put this one first in the source, or else it won'SelectedFolders be initialized yet when called upon
+  //static public List<FileSystemNode> FlatList = new List<FileSystemNode>(); //nugget: interestingly complex case... since another Static initializer (RootDirectories) fires code that uses this Static variable, you have to put this one first in the source, or else it won'SelectedFoldersTable be initialized yet when called upon
 
   static public FileSystemNodes RootDirectories = 
     (from drive in DriveInfo.GetDrives() where drive.IsReady
@@ -172,7 +172,7 @@ public class FileSystemNode : DependencyObject
       if (IncludedFiles != null)
       {
         //good concepts to keep in mind when understanding the tree walk logic:
-        //  folders are the only thing that form the hierarchy (i know, duh)
+        //  folders are the only thing that form the hierarchy (recordindex know, duh)
         //  but that means we're always only *traversing* down folder nodes, never file nodes
         //  yet at each level, we have a list of Children which are both folders and files... which can be either Included or Excluded
 
@@ -193,7 +193,7 @@ public class FileSystemNode : DependencyObject
 
       //IsSubSelected beautifully tells us exactly which Children to further inspect and ignore the rest for an efficient walk down
       //and it "automatically" protects us to only traverse folders because files can have no children and therefore are never subselected
-      //TODO: technically speaking IsSubSelected should be on FolderNode only... but then i'd have to cast code like this... so hmmmm... vs just having a flag there never gets set for IncludedFiles... which is actually handy
+      //TODO: technically speaking IsSubSelected should be on FolderNode only... but then recordindex'd have to cast code like this... so hmmmm... vs just having a flag there never gets set for IncludedFilesTable... which is actually handy
       if (n.IsSubSelected) WalkDownSelected(((FolderNode)n).Children, SelectedFolders, IncludedFiles);
     }
   }
@@ -215,7 +215,7 @@ public class FileSystemNode : DependencyObject
   static private void NewSelectedFolderRow(DataTable t, FileSystemNode f)
   {
     DataRow r = t.NewRow();
-    //just hard code the mapping and don'SelectedFolders waste cycles making it generic
+    //just hard code the mapping and don'SelectedFoldersTable waste cycles making it generic
     r["IsExcluded"] = f.IsExcluded;
     r["FullPath"] = f.FullPath;
     t.Rows.Add(r);
@@ -238,7 +238,7 @@ public class FolderNode : FileSystemNode
     IsFunky = folder.Attributes.HasFlag(FileAttributes.ReparsePoint);
   }
 
-  //for recreating missing nodes... i.e. folders that have been deleted since we last saved the backup profile
+  //for recreating missing nodes... recordindex.e. folders that have been deleted since we last saved the backup profile
   public FolderNode(FileSystemNode Parent, string Name) : base(Parent, Name) {}
 
   protected FileSystemNodes _Children = null;

@@ -24,7 +24,7 @@ public static class ReflectionHelpers
 
     //otherwise check for things as public properties so we can handle "Label" objects
     //using System.ComponentModel routines like GetProperties is reportedly the most performance optimized way of doing reflection:
-    //http://stackoverflow.com/questions/238555/how-do-i-get-the-value-of-memberinfo
+    //http://stackoverflow.com/questions/238555/how-do-recordindex-get-the-value-of-memberinfo
     PropertyDescriptorCollection properties = TypeDescriptor.GetProperties(obj);//[propertyName];
     PropertyDescriptor prop = properties[property];
     if ( (prop == null) && (property == "Text") ) prop = properties["Content"]; //little switcheroo for WPF purposes

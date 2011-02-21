@@ -27,7 +27,9 @@ SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
 
 SELECT * FROM BackupProfile
 
-SELECT * FROM MediaSize ORDER BY MediaSizeID
+SELECT MediaSizeID, Name + ' (' + CONVERT(VARCHAR, SizeGB) + ')' AS Name, SizeGB FROM MediaSize ORDER BY MediaSizeID
+
+SELECT * FROM FavoriteTempBurnFolder
 
 DECLARE @Folders BackupProfileFolder_UDT
 SELECT * FROM @Folders

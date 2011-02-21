@@ -24,27 +24,28 @@ if not exists(select 1 from sysobjects where name = 'MediaSubset_Commit')
 	exec('create PROCEDURE MediaSubset_Commit as select 1 as one')
 GO
 alter PROCEDURE [dbo].[MediaSubset_Commit] 
-@IncrementalID INT,
-@MediaSubsetNumber INT,
-@Files FileArchiveID_UDT readonly
+@BackupProfileID INT,
+@Files File_UDT readonly
 AS BEGIN
 	
 SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
 
-DECLARE @MediaSubsetID int
-SELECT @MediaSubsetID = MediaSubsetID FROM MediaSubset WHERE IncrementalID = @IncrementalID AND MediaSubsetNumber = @MediaSubsetNumber
-IF (@MediaSubsetID IS NULL)
-BEGIN
-  INSERT MediaSubset (IncrementalID, MediaSubsetNumber) VALUES (@IncrementalID, @MediaSubsetNumber)
-  SELECT @MediaSubsetID = SCOPE_IDENTITY()
-END
+DECLARE @IncrementalID INT, @MediaSubsetID int
+SELECT @IncrementalID = MAX(IncrementalID) FROM [Incremental] WHERE BackupProfileID = BackupProfileID
 
-UPDATE fa SET fa.MediaSubsetID = @MediaSubsetID
-FROM @Files f
-JOIN FileArchive fa ON fa.FileArchiveID = f.FileArchiveID
+INSERT MediaSubset ( IncrementalID ) VALUES  ( @IncrementalID )
+SET @MediaSubsetID = SCOPE_IDENTITY()
 
-UPDATE MediaSubset SET Finalized = 1 WHERE MediaSubsetID = @MediaSubsetID
+INSERT [File]( FullPath )
+SELECT fi.FullPath
+FROM @Files fi
+WHERE NOT EXISTS(SELECT 1 FROM [File] f WHERE f.FullPath = fi.FullPath)
 
+INSERT FileArchive (MediaSubsetID, FileID, ModifiedDate, [Size])
+SELECT @MediaSubsetID, f.FileID, fi.ModifiedDate, fi.[Size]
+FROM @Files fi
+JOIN [File] f ON f.FullPath = fi.FullPath
+        
 END
 GO
 

@@ -4,8 +4,7 @@
         xmlns:global="clr-namespace:;assembly="
         xmlns:local="clr-namespace:YASBE"
         xmlns:SysIO="clr-namespace:System.IO;assembly=mscorlib"
-        Title="MainWindow" WindowState="Maximized"
-        Loaded="MainWindow_Loaded"
+        Title="YASBE - Yet Another Simple Backup Enabler" WindowState="Maximized"
         DataContext="{Binding RelativeSource={RelativeSource Self}}"
         xmlns:Properties="clr-namespace:YASBE.Properties"
         xmlns:diagnostics="clr-namespace:System.Diagnostics;assembly=WindowsBase"
@@ -13,7 +12,7 @@
  >
 
   <Window.CommandBindings>
-    <CommandBinding Command="{x:Static local:RoutedCommands.CopyToExclusions}" Executed="CopyToExclusions_Executed" />
+    <!--CommandBinding Command="{x:Static local:RoutedCommands.CopyToExclusions}" Executed="CopyToExclusions_Executed" /-->
   </Window.CommandBindings>
 
   <Grid>
@@ -34,81 +33,50 @@
       
       <StackPanel Orientation="Vertical">
       
-        <StackPanel Orientation="Horizontal" Visibility="Collapsed" >
-        
-          <Button Click="DoIt_Click" >
-            <StackPanel Orientation="Horizontal">
-              <TextBlock Text="Do It" Style="{StaticResource BigButtonText}"  />
-              <Image Source="Arrow - Large Right - Green.png" />
-            </StackPanel>
-          </Button>
-        
-          <Button Click="Abort_Click" >
-            <StackPanel Orientation="Horizontal">
-              <TextBlock Text="Abort" Style="{StaticResource BigButtonText}"   />
-              <Image Source="Forbidden 02.png" />
-            </StackPanel>
-          </Button>
-
-          <WrapPanel Orientation="Horizontal" Width="350">
-            <WrapPanel.Resources>
-              <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-                <Setter Property="Margin" Value="3 3 0 0" />
-              </Style>
-            </WrapPanel.Resources>
-            <Button Content="Stamp Current Batch as 'Archived'" />
-          </WrapPanel>
-          
-          <Label FontSize="32" Content="Status:" />
-          <Label FontSize="32" FontWeight="Bold" Content="Stopped" Name="lblStatus" />
-        
-        </StackPanel>
-
         <StackPanel Orientation="Horizontal" >
         </StackPanel>
 
         <StackPanel Orientation="Horizontal" >
           <Button Content="Save Profile Parameters" Click="BackupProfileSave_Click" />
           <Label FontSize="24" Content="Current Backup Profile:" />
-          <ComboBox Name="cbxBackupProfiles" 
+          <ComboBox Name="cbxBackupProfiles" SelectionChanged="cbxBackupProfiles_SelectionChanged" 
                     DisplayMemberPath="Name" 
                     SelectedValuePath="BackupProfileID" 
-                    SelectedValue="{Binding Mode=TwoWay, Source={x:Static Properties:Settings.Default}, Path=SelectedBackupProfileID}"
-                    SelectionChanged="cbxBackupProfiles_SelectionChanged" />
-            <!--ComboBox.ItemContainerStyle>
-              <Style>
-                <Style.Triggers>
-                  <DataTrigger Binding ="{Binding Mode=OneWay, Path=BackupProfileID}" Value="1">
-                    <Setter Property="ComboBoxItem.IsEnabled" Value="False"/>
-                  </DataTrigger>
-                </Style.Triggers>
-              </Style>
-            </ComboBox.ItemContainerStyle>
-          </ComboBox-->
+                    SelectedValue="{Binding Mode=TwoWay, Source={x:Static Properties:Settings.Default}, Path=SelectedBackupProfileID}" />
+          <Button Content="Refresh" Click="RefreshProfile_Click" />
           
           <Label Content="Media Size:" />
           <ComboBox Name="cbxMediaSize" DisplayMemberPath="Name" SelectedValuePath="MediaSizeID" diagnostics:PresentationTraceSources.TraceLevel="High"
                     SelectedValue="{Binding Mode=TwoWay, ElementName=cbxBackupProfiles, Path=SelectedItem[MediaSizeID]}" />
-          <Label Content="{Binding Mode=OneWay, ElementName=cbxBackupProfiles, Path=SelectedItem[MediaSizeID]}" />
-
+          <Button Content="Edit Size" Click="EditMediaSize_Click" />
         </StackPanel>
 
-        <StackPanel Orientation="Horizontal" Margin="0 10 0 0">
-          <TextBlock Text="Windows Burn Staging Folder:"  />
-          <ComboBox Name="cbxBurnFolders" ItemsSource="{Binding Mode=OneTime, Source={x:Static local:MainWindow.WindowsBurnStagingFolders}}" SelectedIndex="0" />
-          <Button Content="Open In Explorer..." Click="OpenStagingFolder_Click" />
-            <!--Button.Style>
-              <Style TargetType="{x:Type Button}" BasedOn="{StaticResource {x:Type Button}}"> <nugget: basing a Style off the Default Style>
-                <Style.Triggers>
-                  <DataTrigger Binding="{Binding ElementName=cbxBurnFolders, Path=SelectedIndex}" Value="-1"> <nugget: Button.IsEnabled based on ComboBox.SelectedIndex >
-                    <Setter Property="Button.IsEnabled" Value="False" />
-                  </DataTrigger>
-                </Style.Triggers>
-              </Style>
-            </Button.Style>
-          </Button-->
+        <StackPanel Orientation="Vertical">
+          <StackPanel Orientation="Horizontal" Margin="0 10 0 0">
+            <TextBlock Text="Windows Burn Staging Folder:"  />
+            <ComboBox Name="cbxBurnFolders" ItemsSource="{Binding Mode=OneTime, Source={x:Static local:MainWindow.WindowsBurnStagingFolders}}" SelectedIndex="0" />
+            <Button Content="Open In Explorer..." Click="OpenStagingFolder_Click" />
+              <!--Button.Style>
+                <Style TargetType="{x:Type Button}" BasedOn="{StaticResource {x:Type Button}}"> <nugget: basing a Style off the Default Style>
+                  <Style.Triggers>
+                    <DataTrigger Binding="{Binding ElementName=cbxBurnFolders, Path=SelectedIndex}" Value="-1"> <nugget: Button.IsEnabled based on ComboBox.SelectedIndex >
+                      <Setter Property="Button.IsEnabled" Value="False" />
+                    </DataTrigger>
+                  </Style.Triggers>
+                </Style>
+              </Button.Style>
+            </Button-->
+          </StackPanel>
+          <StackPanel Orientation="Horizontal">
+            <StackPanel Orientation="Vertical" Margin="0 0 5 0">
+              <TextBlock Text="Favorite Staging Folders:" />
+              <ListBox Name="lbxFavoriteBurnFolders" MinWidth="50" DisplayMemberPath="Path" SelectedValuePath="Path" />
+            </StackPanel>
+            <Button Content="Assign Favorite to Selected Staging Folder" Click="AssignFavoriteToSelectedBurnStagingFolder_Click" />
+            <Button Content="Add New Favorite..." Click="AddNewFavoriteTempBurnFolder_Click" />
+          </StackPanel>
         </StackPanel>
-        
+
       </StackPanel>
     </Border>
 
@@ -139,14 +107,7 @@
             </TextBlock>
           </WrapPanel>
 
-          <DataGrid Name="gridIncrementalHistory" AutoGenerateColumns="True" MaxHeight="100" IsReadOnly="True" HeadersVisibility="Column">
-            <DataGrid.ContextMenu>
-              <ContextMenu>
-                <MenuItem Header="Make Active" Click="MakeActiveIncremental_Click" />
-              </ContextMenu>
-            </DataGrid.ContextMenu>
-
-          </DataGrid>
+          <DataGrid Name="gridIncrementalHistory" AutoGenerateColumns="True" MaxHeight="100" IsReadOnly="True" HeadersVisibility="Column" />
         </DockPanel>
       </GroupBox>
       
@@ -157,60 +118,61 @@
             <RowDefinition Height="auto" />
             <RowDefinition Height="*" />
           </Grid.RowDefinitions>
-          <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="Auto" />
-          </Grid.ColumnDefinitions>
-
-          <WrapPanel DockPanel.Dock="Top" Background="LightSteelBlue" Grid.ColumnSpan="2">
-            <Button Content="Get All Current Files" Click="GatherCandidates_Click" Margin="10" />
-            <Button Content="Show Folders" Click="ShowSelectedFolders_Click" />
-            <Button Content="Show Files" Click="ShowIncludedFiles_Click" />
-            <Button Content="Compute Incremental" Margin="20 0 0 0" Click="ComputeIncremental_Click" />
-            <CheckBox Name="chkOverrideExistingMediaSubsets" Foreground="DarkRed" FontWeight="Bold" VerticalAlignment="Center" 
-                      Margin="5"
-                      Visibility="Collapsed"><TextBlock>Override<LineBreak/>*DELETES DISCS*</TextBlock></CheckBox>
-          </WrapPanel>
-          
+         
           <WrapPanel DockPanel.Dock="Top" Background="LightSteelBlue" Grid.Row="1" >
-            <Label Content="Current Disc:" Margin="10 0"/>
-            <Label Name="lblCurrentDisc" FontWeight="Bold" Content="{Binding Mode=OneWay, Path=MediaSubsetNumberCurrent}" />
-            <CheckBox Name="chkHideCompleteMediaSubsets" IsChecked="True" Content="Hide Finalized" VerticalAlignment="Center" Click="HideCompletedMediaSubsets_Click" Margin="10 5 0 5" />
-            <Button Content="Select Next Disc's Worth Of Files" Margin="10" Click="IdentifyNextMediaSubset_Click" />
-            <Button Content="SymLink Selected Into Burn Folder" Click="SymLinkToBurn_Click"  />
+            <StackPanel Orientation="Vertical">
+              <StackPanel Orientation="Horizontal">
+                <Label Content="Working on Disc #:"/>
+                <Label Name="lblCurrentDisc" FontWeight="Bold" />
+              </StackPanel>
+              <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Total Files Remaining: " />
+                <TextBlock Name="lblTotalFiles" Text="-" />
+                <TextBlock Text=" (" />
+                <TextBlock Name="lblTotalBytes" Text="-" />
+                <TextBlock Text=" Bytes)" />
+              </StackPanel>
+              <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Remaining Discs Required: " />
+                <TextBlock Name="lblDiscCount" Text="-" />
+              </StackPanel>
+            </StackPanel>  
+             
+            <StackPanel Orientation="Vertical" VerticalAlignment="Center" Margin="10 0 0 0">
+              <CheckBox Content="Show Errors Only" Margin="0,5,0,0" Name="chkShowErrorsOnly" Click="chkShowErrorsOnly_Click"  />
+              <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Errors: " />
+                <TextBlock Name="lblErrorCount" Text="-" />
+              </StackPanel>
+            </StackPanel>
+            <StackPanel Orientation="Vertical" Margin="5 0">
+              <Button Content="Select Next Disc's Worth Of Files" Margin="0 0 0 5" Click="IdentifyNextMediaSubset_Click" />
+              <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Selected: " />
+                <TextBlock Name="lblQtySelected" Text="-" />
+                <TextBlock Text=" (" />
+                <TextBlock Name="lblBytesSelected" Text="-" />
+                <TextBlock Text=" Bytes)" />
+              </StackPanel>
+            </StackPanel>
+            <Button Content="Send Files To Burn Folder" Click="SymLinkToBurn_Click"  />
+            <StackPanel Orientation="Vertical" VerticalAlignment="Center">
+              <RadioButton Name="rdoSymLink" Margin="0 0 15 5" Content="Symbolic Links" GroupName="BurnFolderCopyTypeRadioGroup" ToolTip="Many Burners (e.g. Nero) will copy SymLinks directly (i.e. not the file itself), which is worthless." />
+              <RadioButton Name="rdoTrueCopy" Content="True File Copy" IsChecked="True" GroupName="BurnFolderCopyTypeRadioGroup" />
+            </StackPanel>
             <Button Content="Mark Current Disc Complete" Click="MediaSubsetCommit_Click" />
           </WrapPanel>
 
-          <Border Background="LightSteelBlue" Grid.Row="1" Grid.Column="1" BorderThickness="0" >
-            <WrapPanel VerticalAlignment="Bottom">
-              <TextBlock VerticalAlignment="Bottom" Margin="5 0 3 0"
-                         Text="{Binding Mode=OneWay, ElementName=gridFilesWorkingSet, Path=Items.Count, StringFormat='{}{0:#,#,0} total'}" />
-              <TextBlock VerticalAlignment="Bottom" Margin="5 0 3 0"
-                         Text="{Binding Mode=OneWay, Path=SelectedMediaSubsetFilesCount, StringFormat='({0:#,#,0} selected,'}" />
-              <TextBlock VerticalAlignment="Bottom" Margin="5 0 3 0"
-                         Text="{Binding Mode=OneWay, Path=SelectedMediaSubsetFilesBytes, StringFormat='{}{0:#,#,0} Bytes)'}" />
-            </WrapPanel>
-          </Border>
-
-          <DataGrid Grid.Row="2" Grid.ColumnSpan="2"
-                    Name="gridFilesWorkingSet" IsReadOnly="True" HeadersVisibility="Column"
-                    AutoGenerateColumns="True" 
-                    ItemsSource="{Binding Mode=OneWay, Path=CurrentGridFilesTable}">
+          <DataGrid Grid.Row="2" Grid.ColumnSpan="2" Name="gridFilesWorkingSet" IsReadOnly="True" HeadersVisibility="Column" AutoGenerateColumns="True" >
             <DataGrid.Resources>
-              <Style TargetType="{x:Type TextBlock}">
-                <Setter Property="TextAlignment" Value="Right" />
-                <Setter Property="Foreground" Value="Red" />
-              </Style>
-
-              <Style x:Key="RightAlignStyling" TargetType="{x:Type TextBlock}">
-                <Setter Property="TextAlignment" Value="Right" />
-              </Style>
-
               <!-- nugget: colorizing individual cell elements based on underlying data field values -->
               <Style TargetType="{x:Type DataGridCell}" BasedOn="{StaticResource PrettyDataGridCellStyle}">
                 <Style.Triggers>
-                  <DataTrigger Value="True" Binding="{Binding Path=MediaSubsetNumber, Converter={local:IsFileInCurrentMediaSubsetConverter}}">
+                  <DataTrigger Value="True" Binding="{Binding Mode=OneWay, Path=Selected}">
                     <Setter Property="Background" Value="LightYellow" />
+                  </DataTrigger>
+                  <DataTrigger Value="True" Binding="{Binding Mode=OneWay, Path=SkipError}">
+                    <Setter Property="Background" Value="Pink" />
                   </DataTrigger>
                 </Style.Triggers>
               </Style>

@@ -13,7 +13,7 @@ namespace YASBE
     {
       base.OnStartup(e);
 
-      System.Diagnostics.Process.Start("net.exe", "start MSSQL$DEV2008");
+      //System.Diagnostics.Process.Start("net.exe", "start MSSQL$DEV2008");
 
       Proc.NewWaitObject = new Proc.WaitObjectConstructor(WaitCursorWrapper.WaitCursorWrapperFactory);
       Proc.ConnectionString = @"Data Source=.\dev2008;User ID=sa;Password=annoying;Initial Catalog=YASBE;";
