@@ -28,13 +28,14 @@ SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
 SELECT 
   f.FullPath, fa.ModifiedDate, fa.Size,
   m.Finalized,
+  CONVERT(BIT, 0) AS SkipError,
   m.MediaSubsetNumber,
   fa.FileArchiveID--, m.MediaSubsetID
 FROM MediaSubset m
 JOIN FileArchive fa ON fa.MediaSubsetID = m.MediaSubsetID
 JOIN [File] f ON f.FileID = fa.FileID
 WHERE m.IncrementalID = @IncrementalID
-ORDER BY f.FullPath DESC, fa.[Size] DESC
+ORDER BY f.FullPath asc, fa.[Size] DESC
 
 -- strategically sorting by fullpath and descending size should keep files from same folders on sequential media
 -- and also tackle the big files up front so that we have better odds of squeezing the smaller ones onto the end of the media

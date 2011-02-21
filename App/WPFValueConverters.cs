@@ -23,7 +23,7 @@ namespace WPFValueConverters
 
   public class BoolToItalicConverter : MarkupExtensionConverter, IValueConverter
   {
-    public BoolToItalicConverter() { } //to avoid an XAML annoying warning: "No constructor for type 'xyz' has 0 parameters."  Somehow the inherited one doesn'SelectedFolders do the trick!?!  I guess it's a reflection bug.
+    public BoolToItalicConverter() { } //to avoid an XAML annoying warning: "No constructor for type 'xyz' has 0 parameters."  Somehow the inherited one doesn'SelectedFoldersTable do the trick!?!  I guess it's a reflection bug.
 
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
@@ -38,7 +38,7 @@ namespace WPFValueConverters
 
   public class InverseBooleanConverter : MarkupExtensionConverter, IValueConverter
   {
-    public InverseBooleanConverter() { } //to avoid an annoying XAML warning: "No constructor for type 'xyz' has 0 parameters."  Somehow the inherited one doesn'SelectedFolders do the trick!?!  I guess it's a reflection bug.
+    public InverseBooleanConverter() { } //to avoid an annoying XAML warning: "No constructor for type 'xyz' has 0 parameters."  Somehow the inherited one doesn'SelectedFoldersTable do the trick!?!  I guess it's a reflection bug.
 
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
@@ -60,7 +60,7 @@ namespace WPFValueConverters
       Normal, Inverse
     }
 
-    public BooleanToVisibilityConverter() { } //to avoid an XAML annoying warning: "No constructor for type 'xyz' has 0 parameters."  Somehow the inherited one doesn'SelectedFolders do the trick!?!  I guess it's a reflection bug.
+    public BooleanToVisibilityConverter() { } //to avoid an XAML annoying warning: "No constructor for type 'xyz' has 0 parameters."  Somehow the inherited one doesn'SelectedFoldersTable do the trick!?!  I guess it's a reflection bug.
 
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
@@ -84,11 +84,11 @@ namespace WPFValueConverters
   /// This converter's Parameter should specifiy a Path string which refers to a string Property on current DataContext
   /// That string Property should return another Path string which corresponds to the desired Property which will be pulled and returned
   /// This converter allows us to do a "double hop", otherwise unavailable in basic Binding syntax
-  /// Don'SelectedFolders use it for something that should change often, looping and reflection obviously aren'SelectedFolders performant
+  /// Don'SelectedFoldersTable use it for something that should change often, looping and reflection obviously aren'SelectedFoldersTable performant
   /// </summary>
   public class IndirectPropertyConverter : MarkupExtensionConverter, IValueConverter
   {
-    public IndirectPropertyConverter() { } //to avoid an XAML annoying warning: "No constructor for type 'xyz' has 0 parameters."  Somehow the inherited one doesn'SelectedFolders do the trick!?!  I guess it's a reflection bug.
+    public IndirectPropertyConverter() { } //to avoid an XAML annoying warning: "No constructor for type 'xyz' has 0 parameters."  Somehow the inherited one doesn'SelectedFoldersTable do the trick!?!  I guess it's a reflection bug.
 
     public object Convert(object value, System.Type targetType, object parameter, System.Globalization.CultureInfo culture)
     {
@@ -135,7 +135,7 @@ namespace WPFValueConverters
   /// </summary>
   public class BoolToSolidBrushConverter : MarkupExtensionConverter, IValueConverter
   {
-    public BoolToSolidBrushConverter() { } //to avoid an XAML annoying warning: "No constructor for type 'xyz' has 0 parameters."  Somehow the inherited one doesn'SelectedFolders do the trick!?!  I guess it's a reflection bug.
+    public BoolToSolidBrushConverter() { } //to avoid an XAML annoying warning: "No constructor for type 'xyz' has 0 parameters."  Somehow the inherited one doesn'SelectedFoldersTable do the trick!?!  I guess it's a reflection bug.
 
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
@@ -151,7 +151,7 @@ namespace WPFValueConverters
 
   public class IntToSolidBrushConverter : MarkupExtensionConverter, IValueConverter
   {
-    public IntToSolidBrushConverter() { } //to avoid an XAML annoying warning: "No constructor for type 'xyz' has 0 parameters."  Somehow the inherited one doesn'SelectedFolders do the trick!?!  I guess it's a reflection bug.
+    public IntToSolidBrushConverter() { } //to avoid an XAML annoying warning: "No constructor for type 'xyz' has 0 parameters."  Somehow the inherited one doesn'SelectedFoldersTable do the trick!?!  I guess it's a reflection bug.
 
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
@@ -166,7 +166,7 @@ namespace WPFValueConverters
 
   public class BoolToParmStringConverter : MarkupExtensionConverter, IValueConverter
   {
-    public BoolToParmStringConverter() { } //to avoid an XAML annoying warning: "No constructor for type 'xyz' has 0 parameters."  Somehow the inherited one doesn'SelectedFolders do the trick!?!  I guess it's a reflection bug.
+    public BoolToParmStringConverter() { } //to avoid an XAML annoying warning: "No constructor for type 'xyz' has 0 parameters."  Somehow the inherited one doesn'SelectedFoldersTable do the trick!?!  I guess it's a reflection bug.
 
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
@@ -182,7 +182,7 @@ namespace WPFValueConverters
 
   public class BoolExpressionToVisibility : MarkupExtensionConverter, IValueConverter
   {
-    public BoolExpressionToVisibility() { } //to avoid an XAML annoying warning: "No constructor for type 'xyz' has 0 parameters."  Somehow the inherited one doesn'SelectedFolders do the trick!?!  I guess it's a reflection bug.
+    public BoolExpressionToVisibility() { } //to avoid an XAML annoying warning: "No constructor for type 'xyz' has 0 parameters."  Somehow the inherited one doesn'SelectedFoldersTable do the trick!?!  I guess it's a reflection bug.
 
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
@@ -198,7 +198,7 @@ namespace WPFValueConverters
 
   public class BoolExpressionToBool : MarkupExtensionConverter, IValueConverter //nugget: leverage the JScript.dll StringEvaluator to build dynamic ValueConverters
   {
-    public BoolExpressionToBool() { } //to avoid an XAML annoying warning: "No constructor for type 'xyz' has 0 parameters."  Somehow the inherited one doesn'SelectedFolders do the trick!?!  I guess it's a reflection bug.
+    public BoolExpressionToBool() { } //to avoid an XAML annoying warning: "No constructor for type 'xyz' has 0 parameters."  Somehow the inherited one doesn'SelectedFoldersTable do the trick!?!  I guess it's a reflection bug.
 
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
@@ -215,7 +215,7 @@ namespace WPFValueConverters
 
   public class AND : WPFValueConverters.MarkupExtensionConverter, IMultiValueConverter
   {
-    public AND() { } //to avoid an XAML annoying warning from XAML designer: "No constructor for type 'xyz' has 0 parameters."  Somehow the inherited one doesn'SelectedFolders do the trick!?!  I guess it's a reflection bug.
+    public AND() { } //to avoid an XAML annoying warning from XAML designer: "No constructor for type 'xyz' has 0 parameters."  Somehow the inherited one doesn'SelectedFoldersTable do the trick!?!  I guess it's a reflection bug.
 
     public object Convert(object[] values, Type targetType, object parameter, System.Globalization.CultureInfo culture)
     {
@@ -235,7 +235,7 @@ namespace WPFValueConverters
 
   public class IndirectMultiValue : WPFValueConverters.MarkupExtensionConverter, IMultiValueConverter
   {
-    public IndirectMultiValue() { } //to avoid an XAML annoying warning from XAML designer: "No constructor for type 'xyz' has 0 parameters."  Somehow the inherited one doesn'SelectedFolders do the trick!?!  I guess it's a reflection bug.
+    public IndirectMultiValue() { } //to avoid an XAML annoying warning from XAML designer: "No constructor for type 'xyz' has 0 parameters."  Somehow the inherited one doesn'SelectedFoldersTable do the trick!?!  I guess it's a reflection bug.
 
     public object Convert(object[] values, Type targetType, object parameter, System.Globalization.CultureInfo culture)
     {
@@ -265,7 +265,7 @@ namespace WPFValueConverters
 
   public class NotNullToVisibleConverter : MarkupExtensionConverter, IValueConverter
   {
-    public NotNullToVisibleConverter() { } //to avoid an annoying warning from XAML designer: "No constructor for type 'xyz' has 0 parameters."  Somehow the inherited one doesn'SelectedFolders do the trick!?!  I guess it's a reflection bug.
+    public NotNullToVisibleConverter() { } //to avoid an annoying warning from XAML designer: "No constructor for type 'xyz' has 0 parameters."  Somehow the inherited one doesn'SelectedFoldersTable do the trick!?!  I guess it's a reflection bug.
 
     public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
     {

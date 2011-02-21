@@ -25,11 +25,11 @@
           <AssociatedConnUserName />
           <FullPath>BackupProfileFolder_UDT.sql</FullPath>
         </FileNode>
-        <FileNode Name="BackupProfileFolders_s.sql">
+        <FileNode Name="BackupProfile_s.sql">
           <AssociatedConnectionMoniker>8c91a03d-f9b4-46c0-a305-b5dcc79ff907:BEEJQUAD\DEV2008:True</AssociatedConnectionMoniker>
           <AssociatedConnSrvName>BEEJQUAD\DEV2008</AssociatedConnSrvName>
           <AssociatedConnUserName />
-          <FullPath>BackupProfileFolders_s.sql</FullPath>
+          <FullPath>BackupProfile_s.sql</FullPath>
         </FileNode>
         <FileNode Name="BackupProfile_u.sql">
           <AssociatedConnectionMoniker>8c91a03d-f9b4-46c0-a305-b5dcc79ff907:BEEJQUAD\DEV2008:True</AssociatedConnectionMoniker>
@@ -43,6 +43,12 @@
           <AssociatedConnUserName />
           <FullPath>BackupProfiles_s.sql</FullPath>
         </FileNode>
+        <FileNode Name="FavoriteTempBurnFolder_i.sql">
+          <AssociatedConnectionMoniker>8c91a03d-f9b4-46c0-a305-b5dcc79ff907:BEEJQUAD\DEV2008:True</AssociatedConnectionMoniker>
+          <AssociatedConnSrvName>BEEJQUAD\DEV2008</AssociatedConnSrvName>
+          <AssociatedConnUserName />
+          <FullPath>FavoriteTempBurnFolder_i.sql</FullPath>
+        </FileNode>
         <FileNode Name="File_UDT.sql">
           <AssociatedConnectionMoniker>8c91a03d-f9b4-46c0-a305-b5dcc79ff907:BEEJQUAD\DEV2008:True</AssociatedConnectionMoniker>
           <AssociatedConnSrvName>BEEJQUAD\DEV2008</AssociatedConnSrvName>
@@ -54,18 +60,6 @@
           <AssociatedConnSrvName>BEEJQUAD\DEV2008</AssociatedConnSrvName>
           <AssociatedConnUserName />
           <FullPath>Files_UploadCompare.sql</FullPath>
-        </FileNode>
-        <FileNode Name="Incremental_Files.sql">
-          <AssociatedConnectionMoniker>8c91a03d-f9b4-46c0-a305-b5dcc79ff907:BEEJQUAD\DEV2008:True</AssociatedConnectionMoniker>
-          <AssociatedConnSrvName>BEEJQUAD\DEV2008</AssociatedConnSrvName>
-          <AssociatedConnUserName />
-          <FullPath>Incremental_Files.sql</FullPath>
-        </FileNode>
-        <FileNode Name="Incremental_FullDetail.sql">
-          <AssociatedConnectionMoniker>8c91a03d-f9b4-46c0-a305-b5dcc79ff907:BEEJQUAD\DEV2008:True</AssociatedConnectionMoniker>
-          <AssociatedConnSrvName>BEEJQUAD\DEV2008</AssociatedConnSrvName>
-          <AssociatedConnUserName />
-          <FullPath>Incremental_FullDetail.sql</FullPath>
         </FileNode>
         <FileNode Name="Incremental_i.sql">
           <AssociatedConnectionMoniker>8c91a03d-f9b4-46c0-a305-b5dcc79ff907:BEEJQUAD\DEV2008:True</AssociatedConnectionMoniker>
@@ -79,11 +73,11 @@
           <AssociatedConnUserName />
           <FullPath>Incrementals_s.sql</FullPath>
         </FileNode>
-        <FileNode Name="FileArchiveID_UDT.sql">
+        <FileNode Name="MediaSize_u.sql">
           <AssociatedConnectionMoniker>8c91a03d-f9b4-46c0-a305-b5dcc79ff907:BEEJQUAD\DEV2008:True</AssociatedConnectionMoniker>
           <AssociatedConnSrvName>BEEJQUAD\DEV2008</AssociatedConnSrvName>
           <AssociatedConnUserName />
-          <FullPath>FileArchiveID_UDT.sql</FullPath>
+          <FullPath>MediaSize_u.sql</FullPath>
         </FileNode>
         <FileNode Name="MediaSubset_Commit.sql">
           <AssociatedConnectionMoniker>8c91a03d-f9b4-46c0-a305-b5dcc79ff907:BEEJQUAD\DEV2008:True</AssociatedConnectionMoniker>
