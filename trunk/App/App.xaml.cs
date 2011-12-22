@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Configuration;
-using System.Data;
-using System.Linq;
 using System.Windows;
+using System.Configuration;
 
 namespace YASBE
 {
@@ -16,7 +13,8 @@ namespace YASBE
       //System.Diagnostics.Process.Start("net.exe", "start MSSQL$DEV2008");
 
       Proc.NewWaitObject = new Proc.WaitObjectConstructor(WaitCursorWrapper.WaitCursorWrapperFactory);
-      Proc.ConnectionString = @"Data Source=.\dev2008;User ID=sa;Password=annoying;Initial Catalog=YASBE;";
+      //Proc.ConnectionString = @"Data Source=.\dev2008;User ID=sa;Password=annoying;Initial Catalog=YASBE;";
+      Proc.ConnectionString = ConfigurationManager.ConnectionStrings["YASBEConnectionString"].ConnectionString;
 
       //the App.DispatcherUnhandledException is the preferrable catcher because you can "Handle" it and prevent the app from crashing
       App.Current.DispatcherUnhandledException += new System.Windows.Threading.DispatcherUnhandledExceptionEventHandler(Current_DispatcherUnhandledException);
