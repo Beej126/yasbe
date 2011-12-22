@@ -172,7 +172,7 @@ namespace YASBE
         using (Proc Files_UploadCompare = new Proc("Files_UploadCompare"))
         {
           Files_UploadCompare["@BackupProfileID"] = (int)cbxBackupProfiles.SelectedValue;
-          Files_UploadCompare["@AllFiles"] = IncludedFilesTable;
+          Files_UploadCompare["@AllFiles"] = IncludedFilesTable; // <= ******
           WorkingFilesTable = Files_UploadCompare.ExecuteDataTable();
           lblCurrentDisc.Content = Files_UploadCompare["@NextDiscNumber"].ToString();
         }
