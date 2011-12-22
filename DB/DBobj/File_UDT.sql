@@ -22,4 +22,7 @@ if not exists(select 1 from sys.types where name = 'File_UDT')
     ModifiedDate datetime, 
     [Size] bigint
   )
-go
+GO
+
+GRANT EXECUTE ON TYPE::dbo.File_UDT TO PUBLIC
+GO

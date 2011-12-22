@@ -219,7 +219,6 @@ namespace YASBE
           if (CheckFileLocked(files[recordindex]["FullPath"].ToString()))
           {
             files[recordindex]["Selected"] = true;
-            recordcount++;
             bytecount += nextsize;
           }
           else
@@ -233,7 +232,7 @@ namespace YASBE
         lblBytesSelected.Text = bytecount.ToString(BigNumberStringFormat);
         lblErrorCount.Text = errorcount.ToString(BigNumberStringFormat);
 
-        gridFilesWorkingSet.ScrollIntoView(gridFilesWorkingSet.Items[recordindex]);
+        gridFilesWorkingSet.ScrollIntoView(gridFilesWorkingSet.Items[recordindex-1]);
       }
     }
 
